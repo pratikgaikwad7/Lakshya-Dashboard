@@ -2,6 +2,8 @@ from models.db import get_db_connection
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
+from exceptions import NotFoundError
+
 
 class User(UserMixin):
     def __init__(self, row):
@@ -109,6 +111,37 @@ def add_user(username, password, role, plant_location=None):
 
     conn.commit()
     conn.close()
+
+
+def update_user_credentials(user_id, username, password=None):
+    """Update a username and optionally replace its stored password hash."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM users WHERE id = %s", (user_id,))
+        if not cursor.fetchone():
+            raise NotFoundError("User account was not found.")
+
+        if password:
+            cursor.execute(
+                """
+                UPDATE users
+                SET username = %s, password = %s
+                WHERE id = %s
+                """,
+                (username, generate_password_hash(password), user_id),
+            )
+        else:
+            cursor.execute(
+                "UPDATE users SET username = %s WHERE id = %s",
+                (username, user_id),
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def ensure_admin_user(username, password):

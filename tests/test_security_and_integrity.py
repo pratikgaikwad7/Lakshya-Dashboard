@@ -6,7 +6,7 @@ from config import TestingConfig
 from exceptions import ForbiddenError
 from models.evaluations.lifecycle import bulk_upsert_evaluations, promote_student_semester
 from models.student_model import add_student
-from models.user_model import User, ensure_admin_user
+from models.user_model import User, ensure_admin_user, update_user_credentials
 from services.student_service import update_existing_student
 
 
@@ -96,6 +96,62 @@ class AccessControlTests(unittest.TestCase):
     def test_logout_is_post_only(self):
         self.assertEqual(self.client.get('/logout').status_code, 405)
 
+    def test_admin_can_update_username_without_changing_password(self):
+        administrator = user('Admin', user_id=12)
+        with patch('routes.users.update_user_credentials') as update_credentials:
+            response = self.authenticated_request(
+                administrator,
+                'post',
+                '/users/update/7',
+                data={
+                    'username': 'updated_user',
+                    'password': '',
+                    'password_confirmation': '',
+                },
+            )
+        self.assertEqual(response.status_code, 302)
+        update_credentials.assert_called_once_with(7, 'updated_user', None)
+
+    def test_user_update_rejects_password_confirmation_mismatch(self):
+        administrator = user('Admin', user_id=12)
+        with patch('routes.users.update_user_credentials') as update_credentials:
+            response = self.authenticated_request(
+                administrator,
+                'post',
+                '/users/update/7',
+                data={
+                    'username': 'updated_user',
+                    'password': 'strong-password',
+                    'password_confirmation': 'different-password',
+                },
+            )
+        self.assertEqual(response.status_code, 400)
+        update_credentials.assert_not_called()
+
+    def test_non_admin_cannot_update_user_credentials(self):
+        response = self.authenticated_request(
+            user('PMO'),
+            'post',
+            '/users/update/7',
+            data={
+                'username': 'updated_user',
+                'password': '',
+                'password_confirmation': '',
+            },
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_admin_cannot_delete_active_account(self):
+        administrator = user('Admin', user_id=12)
+        with patch('routes.users.delete_user') as delete_account:
+            response = self.authenticated_request(
+                administrator,
+                'post',
+                '/users/delete/12',
+            )
+        self.assertEqual(response.status_code, 400)
+        delete_account.assert_not_called()
+
     def test_configured_admin_is_checked_only_once_per_app_process(self):
         app = create_app(BootstrapTestingConfig)
         client = app.test_client()
@@ -117,18 +173,28 @@ class CSRFTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'name="csrf_token"', response.data)
 
+    def test_user_update_requires_csrf_token(self):
+        app = create_app(CSRFTestingConfig)
+        response = app.test_client().post(
+            '/users/update/7',
+            data={'username': 'updated_user'},
+        )
+        self.assertEqual(response.status_code, 400)
+
 
 class FakeCursor:
     def __init__(self, fetch_results=None, fail_on_evaluation_insert=False):
         self.fetch_results = list(fetch_results or [])
         self.fail_on_evaluation_insert = fail_on_evaluation_insert
         self.queries = []
+        self.params = []
         self.rowcount = 0
         self.lastrowid = 42
 
     def execute(self, query, params=None):
         normalized = ' '.join(query.split())
         self.queries.append(normalized)
+        self.params.append(params)
         if self.fail_on_evaluation_insert and normalized.startswith('INSERT INTO student_evaluations'):
             raise RuntimeError('evaluation insert failed')
         self.rowcount = 1
@@ -165,6 +231,29 @@ class FakeConnection:
 
 
 class DataIntegrityTests(unittest.TestCase):
+    def test_password_update_stores_a_hash_and_commits_once(self):
+        cursor = FakeCursor(fetch_results=[{'id': 7}])
+        connection = FakeConnection(cursor)
+        with patch('models.user_model.get_db_connection', return_value=connection):
+            update_user_credentials(7, 'renamed_user', 'strong-password')
+        username, password_hash, user_id = cursor.params[1]
+        self.assertEqual(username, 'renamed_user')
+        self.assertEqual(user_id, 7)
+        self.assertNotEqual(password_hash, 'strong-password')
+        from werkzeug.security import check_password_hash
+        self.assertTrue(check_password_hash(password_hash, 'strong-password'))
+        self.assertEqual(connection.commits, 1)
+        self.assertEqual(connection.rollbacks, 0)
+
+    def test_username_only_update_does_not_write_password(self):
+        cursor = FakeCursor(fetch_results=[{'id': 7}])
+        connection = FakeConnection(cursor)
+        with patch('models.user_model.get_db_connection', return_value=connection):
+            update_user_credentials(7, 'renamed_user')
+        self.assertEqual(cursor.params[1], ('renamed_user', 7))
+        self.assertNotIn('password', cursor.queries[1].lower())
+        self.assertEqual(connection.commits, 1)
+
     def test_existing_admin_is_never_overwritten_by_bootstrap(self):
         cursor = FakeCursor(fetch_results=[{'id': 1, 'role': 'Admin'}])
         connection = FakeConnection(cursor)

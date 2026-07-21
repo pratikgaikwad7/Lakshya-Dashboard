@@ -1,95 +1,244 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Manage Users</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management | LAKSHYA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/users.css') }}">
 </head>
 
-<body class="bg-gray-100 p-8">
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen">
+    <nav class="users-navbar sticky top-0 z-30 bg-white border-b border-slate-200">
+        <div class="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="/admin-dashboard" class="users-back-link group flex items-center text-sm font-semibold text-slate-500 hover:text-indigo-600">
+                    <span class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center mr-2 group-hover:bg-indigo-50 group-hover:border-indigo-200">
+                        <i class="fas fa-arrow-left text-slate-400 group-hover:text-indigo-600"></i>
+                    </span>
+                    <span class="hidden sm:inline">Dashboard</span>
+                </a>
+                <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
+                <div class="flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-md">
+                        <i class="fas fa-users-cog"></i>
+                    </span>
+                    <div>
+                        <h1 class="text-base sm:text-lg font-extrabold text-slate-900 leading-tight">User Management</h1>
+                        <p class="text-[10px] sm:text-xs text-slate-400">Access and account administration</p>
+                    </div>
+                </div>
+            </div>
+            <span class="users-count-pill"><i class="fas fa-user-shield"></i> {{ users|length }} Accounts</span>
+        </div>
+    </nav>
 
-<h1 class="text-3xl font-bold mb-6">Manage Users</h1>
+    <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="users-alert users-alert-{{ category }}" role="status">
+                    <i class="fas fa-check-circle"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endwith %}
 
-<!-- Add User Form -->
-<form method="POST" action="/users/add" class="bg-white p-6 rounded shadow mb-8 space-y-4">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <section class="users-card overflow-hidden">
+            <div class="users-card-header">
+                <div class="flex items-center gap-3">
+                    <span class="users-card-icon"><i class="fas fa-user-plus"></i></span>
+                    <div>
+                        <h2 class="text-sm font-extrabold text-slate-800">Create a user account</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Assign the correct role and plant access.</p>
+                    </div>
+                </div>
+            </div>
 
-    <input type="text" name="username" placeholder="Username"
-    class="border p-2 w-full rounded" required>
+            <form method="POST" action="/users/add" class="users-form p-4 sm:p-5 lg:p-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label for="newUsername" class="users-label">Username</label>
+                        <div class="users-input-wrap">
+                            <i class="fas fa-user"></i>
+                            <input id="newUsername" type="text" name="username" placeholder="Enter username" class="users-control" maxlength="255" autocomplete="off" required>
+                        </div>
+                    </div>
 
-    <!-- FIXED: password type -->
-    <input type="password" name="password" placeholder="Password"
-    class="border p-2 w-full rounded" required>
+                    <div>
+                        <label for="newPassword" class="users-label">Temporary password</label>
+                        <div class="users-input-wrap">
+                            <i class="fas fa-lock"></i>
+                            <input id="newPassword" type="password" name="password" placeholder="Minimum 8 characters" class="users-control" minlength="8" autocomplete="new-password" required>
+                        </div>
+                    </div>
 
-    <!-- Role -->
-    <select name="role" id="roleSelect" class="border p-2 w-full rounded" required>
-        <option value="">Select Role</option>
-        <option>CHRO</option>
-        <option>PMO</option>
-        <option>Corporate Skill Head</option>
-        <option>HR Head</option>
-        <option>Skill Head</option>
-        <option>Admin</option>
-        <option>SDC Coordinator</option>
-    </select>
+                    <div>
+                        <label for="roleSelect" class="users-label">Role</label>
+                        <select name="role" id="roleSelect" class="users-control users-select" required>
+                            <option value="">Select role</option>
+                            <option>CHRO</option>
+                            <option>PMO</option>
+                            <option>Corporate Skill Head</option>
+                            <option>HR Head</option>
+                            <option>Skill Head</option>
+                            <option>Admin</option>
+                            <option>SDC Coordinator</option>
+                        </select>
+                    </div>
 
-    <!-- Plant Location (hidden by default) -->
-    <select name="plant_location" id="plantLocationBox"
-        class="border p-2 w-full rounded hidden">
-        <option value="">Select Plant Location</option>
- 
-<option value="Pune_CV">Pune CV</option>
-<option value="Dharwad_CV">Dharwad CV</option>
-<option value="Lucknow_CV">Lucknow CV</option>
-<option value="Pantnagar_CV">Pantnagar CV</option>
-<option value="Jamshedpur_CV">Jamshedpur CV</option>
+                    <div id="plantLocationGroup" class="hidden">
+                        <label for="plantLocationBox" class="users-label">Plant location</label>
+                        <select name="plant_location" id="plantLocationBox" class="users-control users-select">
+                            <option value="">Select plant location</option>
+                            <option value="Pune_CV">Pune CV</option>
+                            <option value="Dharwad_CV">Dharwad CV</option>
+                            <option value="Lucknow_CV">Lucknow CV</option>
+                            <option value="Pantnagar_CV">Pantnagar CV</option>
+                            <option value="Jamshedpur_CV">Jamshedpur CV</option>
+                            <option value="Pune_PV">Pune PV</option>
+                            <option value="Sanand_PV1">Sanand PV 1</option>
+                            <option value="Sanand_PV2">Sanand PV 2</option>
+                        </select>
+                    </div>
 
-<option value="Pune_PV">Pune PV</option>
-<option value="Sanand_PV1">Sanand PV 1</option>
-<option value="Sanand_PV2">Sanand PV 2</option>
-    </select>
+                    <div id="createUserAction" class="xl:col-span-1">
+                        <button type="submit" class="users-primary-button w-full">
+                            <i class="fas fa-plus-circle"></i>
+                            Create User
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
 
-    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-        Add User
-    </button>
+        <section class="users-card overflow-hidden">
+            <div class="users-card-header flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <span class="users-card-icon"><i class="fas fa-address-book"></i></span>
+                    <div>
+                        <h2 class="text-sm font-extrabold text-slate-800">Existing accounts</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Update usernames and reset passwords securely.</p>
+                    </div>
+                </div>
+            </div>
 
-</form>
+            <div class="overflow-x-auto">
+                <table class="users-table min-w-full">
+                    <thead>
+                        <tr>
+                            <th>Account</th>
+                            <th>Role</th>
+                            <th>Plant Location</th>
+                            <th>Created</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                            <tr>
+                                <td>
+                                    <div class="flex items-center gap-3 min-w-[180px]">
+                                        <span class="users-avatar">{{ user.username[0]|upper }}</span>
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-bold text-slate-800">{{ user.username }}</span>
+                                                {% if user.id == current_user_id %}
+                                                    <span class="users-current-badge">Current</span>
+                                                {% endif %}
+                                            </div>
+                                            <span class="text-[10px] text-slate-400">Account #{{ user.id }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="users-role-badge">{{ user.role }}</span></td>
+                                <td>
+                                    <span class="text-sm font-medium text-slate-600">
+                                        {% if user.plant_location %}
+                                            <i class="fas fa-map-marker-alt text-indigo-400 mr-1"></i>{{ user.plant_location.replace('_', ' ') }}
+                                        {% else %}
+                                            <span class="text-slate-400">All / Not assigned</span>
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td><span class="text-xs text-slate-500">{{ user.created_at.strftime('%d %b %Y') if user.created_at else '-' }}</span></td>
+                                <td>
+                                    <div class="flex items-center justify-end gap-2 min-w-[150px]">
+                                        <button type="button" class="users-edit-button" data-user-id="{{ user.id }}" data-username="{{ user.username }}">
+                                            <i class="fas fa-pen"></i><span>Edit</span>
+                                        </button>
+                                        {% if user.id != current_user_id %}
+                                            <form method="POST" action="/users/delete/{{ user.id }}" class="users-delete-form" data-username="{{ user.username }}">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="users-delete-button" aria-label="Delete {{ user.username }}">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <button type="button" class="users-delete-button opacity-40 cursor-not-allowed" disabled title="You cannot delete your active account">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="5" class="users-empty-state"><i class="fas fa-users-slash"></i><span>No user accounts found.</span></td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
 
+    <div id="editUserModal" class="users-modal hidden" role="dialog" aria-modal="true" aria-labelledby="editUserTitle">
+        <button type="button" class="users-modal-backdrop" data-close-edit aria-label="Close edit dialog"></button>
+        <div class="users-modal-panel">
+            <div class="users-modal-header">
+                <div class="flex items-center gap-3">
+                    <span class="users-card-icon"><i class="fas fa-user-edit"></i></span>
+                    <div>
+                        <h2 id="editUserTitle" class="text-base font-extrabold text-slate-900">Edit user account</h2>
+                        <p class="text-xs text-slate-400">Change the username, password, or both.</p>
+                    </div>
+                </div>
+                <button type="button" class="users-modal-close" data-close-edit aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
 
-<!-- Users Table -->
-<table class="w-full bg-white rounded shadow">
+            <form id="editUserForm" method="POST" action="" class="p-5 sm:p-6 space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div>
+                    <label for="editUsername" class="users-label">Username</label>
+                    <div class="users-input-wrap">
+                        <i class="fas fa-user"></i>
+                        <input id="editUsername" type="text" name="username" class="users-control" maxlength="255" required>
+                    </div>
+                </div>
+                <div>
+                    <label for="editPassword" class="users-label">New password <span class="font-normal text-slate-400">(optional)</span></label>
+                    <div class="users-input-wrap">
+                        <i class="fas fa-key"></i>
+                        <input id="editPassword" type="password" name="password" class="users-control" minlength="8" placeholder="Leave blank to keep current password" autocomplete="new-password">
+                    </div>
+                </div>
+                <div>
+                    <label for="editPasswordConfirmation" class="users-label">Confirm new password</label>
+                    <div class="users-input-wrap">
+                        <i class="fas fa-shield-alt"></i>
+                        <input id="editPasswordConfirmation" type="password" name="password_confirmation" class="users-control" minlength="8" placeholder="Repeat the new password" autocomplete="new-password">
+                    </div>
+                </div>
+                <p class="users-security-note"><i class="fas fa-lock"></i> Passwords are stored as secure hashes and are never displayed.</p>
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button type="button" class="users-secondary-button" data-close-edit>Cancel</button>
+                    <button type="submit" class="users-primary-button"><i class="fas fa-save"></i> Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-<tr class="bg-gray-200 text-sm uppercase text-gray-600">
-    <th class="p-3">ID</th>
-    <th class="p-3">Username</th>
-    <th class="p-3">Role</th>
-    <th class="p-3">Plant Location</th>
-    <th class="p-3">Action</th>
-</tr>
-
-{% for user in users %}
-<tr class="border-t text-center text-sm">
-    <td class="p-3">{{ user.id }}</td>
-    <td class="p-3 font-medium text-gray-800">{{ user.username }}</td>
-    <td class="p-3">{{ user.role }}</td>
-    <td class="p-3">{{ user.plant_location or '-' }}</td>
-
-    <td class="p-3">
-        <!-- FIXED: POST delete -->
-        <form method="POST" action="/users/delete/{{ user.id }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="text-red-600 hover:underline">
-                Delete
-            </button>
-        </form>
-    </td>
-</tr>
-{% endfor %}
-
-</table>
-
-
-<!-- JS -->
-<script src="{{ url_for('static', filename='js/pages/users.js') }}"></script>
-
+    <script src="{{ url_for('static', filename='js/pages/users.js') }}"></script>
 </body>
 </html>
