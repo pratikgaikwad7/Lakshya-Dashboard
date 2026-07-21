@@ -1,0 +1,76 @@
+        <!-- 1. FINAL EVALUATION TABLE -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center gap-3">
+                <i class="fas fa-calculator text-slate-400"></i>
+                <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Final Evaluation Summary (Sem {{ current_semester }})</h3>
+            </div>
+
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 border-b border-slate-200">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Assessment Area</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Frequency</th>
+                    <th class="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Marks</th>
+                    <th class="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Weight</th>
+                    <th class="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Final Score</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 font-medium text-slate-700 whitespace-nowrap">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded bg-amber-50 flex items-center justify-center">
+                                <i class="fas fa-chalkboard-teacher text-amber-600"></i>
+                            </div>
+                            Training
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-slate-500 text-xs font-medium uppercase">Every Training</td>
+                    <td class="px-6 py-4 text-center font-bold text-slate-800">{{ final_eval.training_marks or 0 }}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-2 py-1 rounded bg-slate-100 text-slate-600 text-xs font-bold">20</span>
+                    </td>
+                    <td class="px-6 py-4 text-center font-bold text-indigo-600 text-base">{{ final_eval.training_total or 0 }}</td>
+                </tr>
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 font-medium text-slate-700 whitespace-nowrap">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded bg-blue-50 flex items-center justify-center">
+                                <i class="fas fa-industry text-blue-600"></i>
+                            </div>
+                            OJT
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-slate-500 text-xs font-medium uppercase">Every Rotation</td>
+                    <td class="px-6 py-4 text-center font-bold text-slate-800">{{ final_eval.ojt_marks or 0 }}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-2 py-1 rounded bg-slate-100 text-slate-600 text-xs font-bold">50</span>
+                    </td>
+                    <td class="px-6 py-4 text-center font-bold text-indigo-600 text-base">{{ final_eval.ojt_total or 0 }}</td>
+                </tr>
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 font-medium text-slate-700 whitespace-nowrap">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded bg-purple-50 flex items-center justify-center">
+                                <i class="fas fa-university text-purple-600"></i>
+                            </div>
+                            BITS
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-slate-500 text-xs font-medium uppercase">Every Semester</td>
+                    <td class="px-6 py-4 text-center font-bold text-slate-800">{{ final_eval.bits_marks or 0 }}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-2 py-1 rounded bg-slate-100 text-slate-600 text-xs font-bold">30</span>
+                    </td>
+                    <td class="px-6 py-4 text-center font-bold text-indigo-600 text-base">{{ final_eval.bits_total or 0 }}</td>
+                </tr>
+                <tr class="total-row text-white">
+                    <td colspan="4" class="px-6 py-5 text-right font-bold text-base tracking-wide flex items-center justify-end gap-2">
+                        <i class="fas fa-trophy"></i> Grand Total
+                    </td>
+                    <td class="px-6 py-5 text-center text-xl font-extrabold">{{ final_eval.grand_total or 0 }}</td>
+                </tr>
+              </tbody>  
+            </table>
+        </div>
+

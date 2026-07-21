@@ -1,0 +1,155 @@
+        <!-- VERTICAL SIDEBAR -->
+        <aside id="filterSidebar" class="evaluation-filter-sidebar lakshya-filter-surface absolute top-0 left-0 h-full w-80 bg-white border-r border-slate-200 z-20 transition-transform duration-300 ease-in-out sidebar-closed flex flex-col" aria-hidden="true" aria-label="Evaluation filters">
+            
+            <!-- Sidebar Header -->
+            <div class="lakshya-filter-header">
+                <div class="lakshya-filter-heading">
+                    <span class="lakshya-filter-icon"><i class="fas fa-sliders-h"></i></span>
+                    <div>
+                        <div class="lakshya-filter-title-row">
+                            <h3 class="lakshya-filter-title">Smart Filters</h3>
+                            <span class="lakshya-filter-live">Live</span>
+                        </div>
+                        <p class="lakshya-filter-subtitle">Refine evaluation records</p>
+                    </div>
+                </div>
+                <button type="button" onclick="toggleSidebar(false)" class="lakshya-filter-close" aria-label="Close filters">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Sidebar Content (Scrollable) -->
+            <div class="lakshya-filter-body flex-1 overflow-y-auto space-y-4">
+                
+                <!-- Upload Button -->
+                <a href="/evaluations/upload-excel" class="flex items-center justify-center w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg shadow-md transition border border-green-500">
+                    <i class="fas fa-file-excel mr-2"></i> Upload Evaluation Excel
+                </a>
+
+                <div class="lakshya-filter-section">
+                    <h4 class="lakshya-filter-section-title"><i class="fas fa-chart-line"></i> Evaluation Details</h4>
+                    <!-- Filter Form -->
+                    <form action="/evaluations" method="GET" class="space-y-3">
+                        
+                        <!-- Ticket No -->
+                        <div>
+                            <label class="lakshya-filter-label">Ticket No</label>
+                            <input type="text" name="ticket_no" value="{{ filters.ticket_no or '' }}" placeholder="Search Ticket..." class="lakshya-filter-control">
+                        </div>
+
+                        <!-- Semester -->
+                        <div>
+                            <label class="lakshya-filter-label">Semester</label>
+                            <select name="semester" class="lakshya-filter-control">
+                                <option value="">All</option>
+                                {% for sem in sem_numbers %}
+                                    <option value="{{ sem }}" {% if filters.semester == sem|string %}selected{% endif %}>Semester {{ sem }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Status -->
+                        <div>
+                            <label class="lakshya-filter-label">Sem Status</label>
+                            <select name="semester_status" class="lakshya-filter-control">
+                                <option value="ongoing" {% if filters.semester_status == 'ongoing' %}selected{% endif %}>Ongoing</option>
+                                <option value="completed" {% if filters.semester_status == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="" {% if filters.semester_status == '' %}selected{% endif %}>All</option>
+                            </select>
+                        </div>
+
+                        <!-- Year -->
+                        <div>
+                            <label class="lakshya-filter-label">Batch Year</label>
+                            <select name="year" class="lakshya-filter-control">
+                                <option value="">All</option>
+                                {% for year in filter_options.years %}
+                                    <option value="{{ year }}" {% if filters.year == year|string %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Batch No -->
+                        <div>
+                            <label class="lakshya-filter-label">Batch No</label>
+                            <select name="batch_no" class="lakshya-filter-control">
+                                <option value="">All</option>
+                                {% for batch in filter_options.batch_nos %}
+                                    <option value="{{ batch }}" {% if filters.batch_no == batch|string %}selected{% endif %}>{{ batch }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Branch -->
+                        <div>
+                            <label class="lakshya-filter-label">Branch</label>
+                            <select name="branch" class="lakshya-filter-control">
+                                <option value="">All</option>
+                                {% for branch in filter_options.branches %}
+                                    <option value="{{ branch }}" {% if filters.branch == branch %}selected{% endif %}>{{ branch }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Department -->
+                        <div>
+                            <label class="lakshya-filter-label">Department</label>
+                            <select name="department" class="lakshya-filter-control">
+                                <option value="">All</option>
+                                {% for dept in filter_options.departments %}
+                                    <option value="{{ dept }}" {% if filters.department == dept %}selected{% endif %}>{{ dept }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Gender -->
+                        <div>
+                            <label class="lakshya-filter-label">Gender</label>
+                            <select name="gender" class="lakshya-filter-control">
+                                <option value="">All</option>
+                                {% for gender in genders %}
+                                    <option value="{{ gender }}" {% if filters.gender == gender %}selected{% endif %}>{{ gender }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Function -->
+                        <div>
+                            <label class="lakshya-filter-label">Function</label>
+                            <select name="function" class="lakshya-filter-control">
+                                <option value="">All</option>
+                                {% for func in filter_options.functions %}
+                                    <option value="{{ func }}" {% if filters.function == func %}selected{% endif %}>{{ func }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- BITS Stream -->
+                        <div>
+                            <label class="lakshya-filter-label">BITS Stream</label>
+                            <select name="bits_stream" class="lakshya-filter-control">
+                                <option value="">All</option>
+                                {% for stream in filter_options.bits_streams %}
+                                    <option value="{{ stream }}" {% if filters.bits_stream == stream %}selected{% endif %}>{{ stream }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="lakshya-filter-actions">
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="submit" class="lakshya-filter-primary px-3 py-2">
+                                    <i class="fas fa-filter mr-1"></i> Apply
+                                </button>
+                                <a href="/evaluations" class="lakshya-filter-secondary px-3 py-2 text-center">
+                                    <i class="fas fa-times mr-1"></i> Clear
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Overlay -->
+        <div id="overlay" onclick="toggleSidebar()" class="absolute inset-0 bg-slate-900/20 z-10 hidden transition-opacity duration-300 opacity-0"></div>

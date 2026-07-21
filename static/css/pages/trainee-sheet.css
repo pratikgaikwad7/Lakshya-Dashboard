@@ -1,0 +1,10 @@
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+        .score-input { transition: all 0.2s ease; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+        .score-input:focus { transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1); border-color: #4f46e5; }
+        header { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        .hidden { display: none !important; }
+        .total-row { background: repeating-linear-gradient(45deg, #1e293b, #1e293b 10px, #334155 10px, #334155 20px); }
+    
+

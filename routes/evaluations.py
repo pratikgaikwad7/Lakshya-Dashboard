@@ -1,42 +1,48 @@
-from flask import Blueprint, render_template, request, session, redirect
-import pandas as pd
+from flask import Blueprint, render_template, request, redirect
+from flask_login import current_user
+
+from exceptions import NotFoundError, ValidationError
+from extensions import limiter
 from models.evaluation_model import (
-    init_evaluation_db,
-    get_filtered_students_for_eval,
-    get_distinct_semesters,
-    get_gender_options,
-    get_student_active_evaluation,
-    get_student_last_evaluation,
-    get_student_evaluation_by_sem,
-    promote_student_semester,
     calculate_final_evaluation,
     create_initial_evaluation,
-    get_student_all_evaluations_list,
-    upsert_evaluation_scores,
     end_seventh_semester,
-    bulk_upsert_evaluations
+    get_distinct_semesters,
+    get_filtered_students_for_eval,
+    get_gender_options,
+    get_student_active_evaluation,
+    get_student_all_evaluations_list,
+    get_student_evaluation_by_sem,
+    get_student_last_evaluation,
+    promote_student_semester,
+    upsert_evaluation_scores,
 )
-from models.student_model import get_filter_options, check_and_update_completion_status, get_student_ticket_id_map
+from models.student_model import get_filter_options, get_student_by_id
+from schemas.evaluations import validate_evaluation_scores, validate_semester
+from security.access import (
+    EVALUATION_MANAGEMENT_ROLES,
+    assigned_plant_required,
+    authorize_student_plant,
+    roles_required,
+)
+from services.excel.common import WorkbookValidationError
+from services.excel.evaluation_import import import_evaluations
+
 
 evaluations_bp = Blueprint('evaluations', __name__)
-init_evaluation_db()
+
 
 @evaluations_bp.route('/evaluations')
+@roles_required(*EVALUATION_MANAGEMENT_ROLES)
 def list_evaluations():
-    if 'username' not in session:
-        return redirect('/login')
+    semester_status = request.args.get('semester_status')
+    if semester_status is None:
+        semester_status = request.args.get('status', 'ongoing')
 
-    role = session.get('role')
-    
-    if role not in ['Admin', 'SDC Coordinator']:
-        return "Access Denied"
-
-    raw_status = request.args.get('status', '')
-    
-    db_filters = {
+    filters = {
         'semester': request.args.get('semester', ''),
-        'semester_status': raw_status,
-        'student_status': '',
+        'semester_status': semester_status,
+        'student_status': request.args.get('student_status', ''),
         'year': request.args.get('year', ''),
         'batch_no': request.args.get('batch_no', ''),
         'branch': request.args.get('branch', ''),
@@ -45,343 +51,126 @@ def list_evaluations():
         'ticket_no': request.args.get('ticket_no', ''),
         'function': request.args.get('function', ''),
         'bits_stream': request.args.get('bits_stream', ''),
-        'plant_location': request.args.get('location', '')
+        'plant_location': request.args.get('location', ''),
     }
-    
-    if 'status' not in request.args:
-        db_filters['semester_status'] = 'ongoing'
 
-    user_location = session.get('plant_location')
-    if role == 'SDC Coordinator' and user_location:
-        db_filters['plant_location'] = user_location
+    restriction = None
+    if current_user.role == 'SDC Coordinator':
+        restriction = assigned_plant_required()
+        filters['plant_location'] = restriction
 
-    students_data = get_filtered_students_for_eval(db_filters)
-
-    for student in students_data:
+    students = get_filtered_students_for_eval(filters)
+    for student in students:
         student['final_eval'] = calculate_final_evaluation(student)
-
-    restriction = user_location if role == 'SDC Coordinator' else None
-    filter_options = get_filter_options(plant_location_restriction=restriction) 
-    
-    sem_numbers = get_distinct_semesters()
-    genders = get_gender_options()
-
-    view_filters = {
-        'semester': db_filters['semester'],
-        'status': db_filters['semester_status'],
-        'year': db_filters['year'],
-        'batch_no': db_filters['batch_no'],
-        'branch': db_filters['branch'],
-        'department': db_filters['department'],
-        'gender': db_filters['gender'],
-        'ticket_no': db_filters['ticket_no'],
-        'function': db_filters['function'],
-        'bits_stream': db_filters['bits_stream'],
-        'plant_location': db_filters['plant_location']
-    }
 
     return render_template(
         'student_evaluation.html',
-        students=students_data,
-        filters=view_filters,
-        filter_options=filter_options,
-        sem_numbers=sem_numbers,
-        genders=genders
+        students=students,
+        filters=filters,
+        filter_options=get_filter_options(plant_location_restriction=restriction),
+        sem_numbers=get_distinct_semesters(),
+        genders=get_gender_options(),
     )
 
 
 @evaluations_bp.route('/evaluations/<int:student_id>', methods=['GET', 'POST'])
+@roles_required(*EVALUATION_MANAGEMENT_ROLES)
 def evaluation_sheet(student_id):
-    if 'username' not in session:
-        return redirect('/login')
-    
-    role = session.get('role')
-    
-    if role not in ['Admin', 'SDC Coordinator']:
-        return "Access Denied"
+    _authorize_student(student_id)
 
-    check_and_update_completion_status()
-    
     if request.method == 'POST':
-        current_semester = int(request.form.get('semester', 1))
-        
-        if role == 'SDC Coordinator':
-            check_data = get_student_evaluation_by_sem(student_id, current_semester)
-            if check_data and check_data.get('plant_location') != session.get('plant_location'):
-                return "Access Denied: You cannot edit students outside your plant.", 403
-
-        success, message = upsert_evaluation_scores(student_id, current_semester, request.form)
+        semester = validate_semester(request.form.get('semester', 1))
+        scores = validate_evaluation_scores(request.form)
+        success, message = upsert_evaluation_scores(student_id, semester, scores)
         if not success:
-            return f"Error updating record: {message}", 403
-        return redirect(f'/evaluations/{student_id}?semester={current_semester}')
+            raise ValidationError(message)
+        return redirect(f'/evaluations/{student_id}?semester={semester}')
 
-    active_eval = get_student_active_evaluation(student_id)
-    
-    if not active_eval:
-        last_eval = get_student_last_evaluation(student_id)
-        if last_eval:
-            active_eval = last_eval
-        else:
+    active_evaluation = get_student_active_evaluation(student_id)
+    if not active_evaluation:
+        active_evaluation = get_student_last_evaluation(student_id)
+        if not active_evaluation:
             create_initial_evaluation(student_id)
-            active_eval = get_student_active_evaluation(student_id)
+            active_evaluation = get_student_active_evaluation(student_id)
+    if not active_evaluation:
+        raise NotFoundError('Could not initialize the evaluation record.')
 
-    if not active_eval:
-         return "Error: Could not initialize evaluation record.", 404
+    active_semester = active_evaluation['semester']
+    viewing_semester = validate_semester(request.args.get('semester', active_semester))
+    student = get_student_evaluation_by_sem(student_id, viewing_semester)
+    if not student:
+        viewing_semester = active_semester
+        student = get_student_evaluation_by_sem(student_id, viewing_semester)
+    if not student:
+        raise NotFoundError('Evaluation record not found.')
 
-    real_current_semester = active_eval['semester']
-
-    requested_sem = request.args.get('semester')
-    viewing_semester = int(requested_sem) if requested_sem else real_current_semester
-
-    student_data = get_student_evaluation_by_sem(student_id, viewing_semester)
-    
-    if not student_data:
-        student_data = get_student_evaluation_by_sem(student_id, real_current_semester)
-        viewing_semester = real_current_semester
-
-    if not student_data:
-         return "Error loading student data.", 404
-    
-    if role == 'SDC Coordinator':
-        if student_data.get('plant_location') != session.get('plant_location'):
-            return "Access Denied: This student does not belong to your plant location.", 403
-    
-    is_latest_semester = (viewing_semester >= real_current_semester)
-
-    all_semesters = get_student_all_evaluations_list(student_id)
-    
-    final_eval = calculate_final_evaluation(student_data)
-    view_status = student_data['semester_status']
-    
-    student_status = student_data.get('status', 'active')
-
+    authorize_student_plant(student)
     return render_template(
         'trainee_sheet.html',
-        student=student_data,
+        student=student,
         current_semester=viewing_semester,
-        final_eval=final_eval,
-        status=view_status,
-        all_semesters=all_semesters,
-        is_latest_semester=is_latest_semester,
-        active_semester=real_current_semester,
-        student_status=student_status
+        final_eval=calculate_final_evaluation(student),
+        status=student['semester_status'],
+        all_semesters=get_student_all_evaluations_list(student_id),
+        is_latest_semester=viewing_semester >= active_semester,
+        active_semester=active_semester,
+        student_status=student.get('status', 'active'),
     )
 
+
 @evaluations_bp.route('/evaluations/<int:student_id>/promote', methods=['POST'])
+@roles_required(*EVALUATION_MANAGEMENT_ROLES)
 def move_next_semester(student_id):
-    if 'username' not in session:
-        return redirect('/login')
-    
-    role = session.get('role')
-    if role not in ['Admin', 'SDC Coordinator']:
-         return "Access Denied", 403
-
-    if role == 'SDC Coordinator':
-        check_eval = get_student_last_evaluation(student_id)
-        if check_eval and check_eval.get('plant_location') != session.get('plant_location'):
-            return "Access Denied", 403
-
+    _authorize_student(student_id)
     success, message = promote_student_semester(student_id)
-    
-    if success:
-        return redirect(f'/evaluations/{student_id}')
-    else:
-        return f"Error: {message}", 400
+    if not success:
+        raise ValidationError(message)
+    return redirect(f'/evaluations/{student_id}')
+
 
 @evaluations_bp.route('/evaluations/<int:student_id>/end-semester-seven', methods=['POST'])
+@roles_required(*EVALUATION_MANAGEMENT_ROLES)
 def end_semester_seven_route(student_id):
-    if 'username' not in session:
-        return redirect('/login')
-    
-    role = session.get('role')
-    if role not in ['Admin', 'SDC Coordinator']:
-         return "Access Denied", 403
-
-    if role == 'SDC Coordinator':
-        check_eval = get_student_last_evaluation(student_id)
-        if check_eval and check_eval.get('plant_location') != session.get('plant_location'):
-            return "Access Denied", 403
-
+    _authorize_student(student_id)
     success, message = end_seventh_semester(student_id)
-    
-    if success:
-        return redirect(f'/evaluations/{student_id}')
-    else:
-        return f"Error: {message}", 400
+    if not success:
+        raise ValidationError(message)
+    return redirect(f'/evaluations/{student_id}')
 
-# ---------------------------------------
-# BULK UPLOAD ROUTE
-# ---------------------------------------
 
 @evaluations_bp.route('/evaluations/upload-excel', methods=['GET', 'POST'])
+@roles_required(*EVALUATION_MANAGEMENT_ROLES)
+@limiter.limit("10 per hour")
 def upload_evaluations_excel():
-    if 'username' not in session:
-        return redirect('/login')
-
-    role = session.get('role')
-    if role not in ['Admin', 'SDC Coordinator']:
-        return "Access Denied"
-
     if request.method == 'GET':
         return render_template('upload_evaluations.html', success_count=None, error_rows=None)
 
-    # POST Logic
-    if 'excel_file' not in request.files:
-        return render_template('upload_evaluations.html', error="No file selected.", success_count=None, error_rows=None)
+    if 'excel_file' not in request.files or request.files['excel_file'].filename == '':
+        return _upload_error('No file selected.')
 
     file = request.files['excel_file']
-    if file.filename == '':
-        return render_template('upload_evaluations.html', error="No file selected.", success_count=None, error_rows=None)
+    if not file.filename.lower().endswith(('.xlsx', '.xls')):
+        return _upload_error('Invalid file format. Please upload .xlsx or .xls')
 
-    if not (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
-        return render_template('upload_evaluations.html', error="Invalid file format. Please upload .xlsx or .xls", success_count=None, error_rows=None)
-
+    restriction = assigned_plant_required() if current_user.role == 'SDC Coordinator' else None
     try:
-        # Read Excel
-        df = pd.read_excel(file)
+        return render_template('upload_evaluations.html', **import_evaluations(file, restriction))
+    except WorkbookValidationError as error:
+        return _upload_error(str(error))
 
-        # ---------------------------------------------------------
-        # ROBUST COLUMN MAPPING (Case Insensitive, Order Independent)
-        # ---------------------------------------------------------
-        
-        # 1. Define Mapping: Normalized Name (lowercase, no spaces) -> Internal Variable
-        column_mapping = {
-            'ticketno': 'ticket_no',
-            'employeename': 'employee_name', 
-            'semester': 'semester',
-            'semesterstatus': 'semester_status',
-            'scoreattendance': 'score_attendance',
-            'scoresuggestions': 'score_suggestions',
-            'scoreprojects': 'score_projects',
-            'scorerecognitions': 'score_recognitions',
-            'scoresafety': 'score_safety',
-            'scorediscipline': 'score_discipline',
-            'scorebitsattendance': 'score_bits_attendance',
-            'scoreequipment': 'score_equipment',
-            'scoreshoptask': 'score_shop_task',
-            'scorefunctionoutput': 'score_function_output',
-            'trainingmarks': 'training_marks',
-            'bitscgpa': 'bits_cgpa'
-        }
 
-        # 2. Normalize DataFrame Columns
-        # Strip whitespace, lowercase, remove spaces/underscores for matching
-        df.columns = [str(col).strip().lower().replace(" ", "").replace("_", "") for col in df.columns]
+def _authorize_student(student_id):
+    student = get_student_by_id(student_id)
+    if not student:
+        raise NotFoundError('Student not found.')
+    authorize_student_plant(student)
+    return student
 
-        # 3. Rename columns based on mapping
-        # Only rename columns that exist in both df and mapping
-        rename_map = {col: column_mapping[col] for col in df.columns if col in column_mapping}
-        df.rename(columns=rename_map, inplace=True)
 
-        # 4. Check for Required Columns (using internal names)
-        required_internal = ['ticket_no', 'semester']
-        
-        missing_cols = [col for col in required_internal if col not in df.columns]
-        if missing_cols:
-            return render_template('upload_evaluations.html', 
-                                   error=f"Missing required columns: {', '.join(missing_cols)}", 
-                                   success_count=None, error_rows=None)
-
-        # Fetch Student Map
-        ticket_map = get_student_ticket_id_map()
-
-        valid_records = []
-        error_rows = []
-
-        # Helper for validation
-        def safe_float(val, default=0.0):
-            try:
-                return float(val) if pd.notna(val) else default
-            except:
-                return default
-
-        def validate_score(val, min_v, max_v, field_name):
-            v = safe_float(val, 0)
-            if v < min_v or v > max_v:
-                return None, f"{field_name} must be {min_v}-{max_v}"
-            return v, None
-
-        # Iterate and Validate
-        for index, row in df.iterrows():
-            row_num = index + 2  # Excel is 1-based + header
-            ticket_no = str(row['ticket_no']).strip()
-            
-            # Validation 1: Ticket Existence
-            if ticket_no not in ticket_map:
-                error_rows.append({"row": row_num, "ticket_no": ticket_no, "reason": "Ticket No not found in system"})
-                continue
-
-            # Validation 2: Semester
-            semester = int(row['semester']) if pd.notna(row['semester']) else None
-            if semester is None or semester < 1 or semester > 7:
-                error_rows.append({"row": row_num, "ticket_no": ticket_no, "reason": "Semester must be 1-7"})
-                continue
-
-            # Validation 3: Semester Status
-            sem_status = str(row.get('semester_status', 'ongoing')).strip().lower() if pd.notna(row.get('semester_status')) else 'ongoing'
-            if sem_status not in ['ongoing', 'completed']:
-                error_rows.append({"row": row_num, "ticket_no": ticket_no, "reason": "Status must be 'ongoing' or 'completed'"})
-                continue
-
-            # Validation 4: Score ranges
-            ojt_fields = ['score_attendance', 'score_suggestions', 'score_projects', 'score_recognitions', 
-                          'score_safety', 'score_discipline', 'score_bits_attendance', 'score_equipment', 
-                          'score_shop_task', 'score_function_output']
-            
-            record_data = {
-                'student_id': ticket_map[ticket_no],
-                'semester': semester,
-                'semester_status': sem_status
-            }
-            
-            has_error = False
-            for field in ojt_fields:
-                # Check if column exists in row to avoid KeyError if optional columns are missing
-                if field in row:
-                    val, err = validate_score(row.get(field), 0, 10, field)
-                    if err:
-                        error_rows.append({"row": row_num, "ticket_no": ticket_no, "reason": err})
-                        has_error = True
-                        break
-                    record_data[field] = val
-                else:
-                    record_data[field] = 0 # Default if column missing
-            
-            if has_error:
-                continue
-
-            # Training (0-100)
-            if 'training_marks' in row:
-                t_mark, err = validate_score(row.get('training_marks'), 0, 100, 'training_marks')
-                if err:
-                    error_rows.append({"row": row_num, "ticket_no": ticket_no, "reason": err})
-                    continue
-                record_data['training_marks'] = t_mark
-            else:
-                record_data['training_marks'] = 0
-
-            # CGPA (0-10)
-            if 'bits_cgpa' in row:
-                cgpa, err = validate_score(row.get('bits_cgpa'), 0, 10, 'bits_cgpa')
-                if err:
-                    error_rows.append({"row": row_num, "ticket_no": ticket_no, "reason": err})
-                    continue
-                record_data['bits_cgpa'] = cgpa
-            else:
-                record_data['bits_cgpa'] = 0
-
-            valid_records.append(record_data)
-
-        # DB Operation
-        success_count = 0
-        if valid_records:
-            success_count = bulk_upsert_evaluations(valid_records)
-
-        return render_template('upload_evaluations.html', 
-                               success_count=success_count, 
-                               error_rows=error_rows,
-                               total_rows=len(df))
-
-    except Exception as e:
-        print(f"Upload Error: {e}")
-        return render_template('upload_evaluations.html', error=f"Processing Error: {str(e)}", success_count=None, error_rows=None)
+def _upload_error(message):
+    return render_template(
+        'upload_evaluations.html',
+        error=message,
+        success_count=None,
+        error_rows=None,
+    ), 400

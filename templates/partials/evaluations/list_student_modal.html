@@ -1,0 +1,140 @@
+    <!-- STUDENT PROFILE MODAL -->
+    <div id="studentModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-60 transition-opacity" onclick="closeStudentModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl w-full border border-slate-200">
+                
+                <!-- Header -->
+                <div class="bg-slate-800 px-6 py-5 flex justify-between items-center relative">
+                    <div class="flex items-center gap-4">
+                        <div id="modalAvatar" class="w-14 h-14 rounded-full bg-white text-slate-800 flex items-center justify-center font-bold text-xl shadow-lg border-4 border-white/20"></div>
+                        <div class="text-white text-left">
+                            <h3 class="text-xl font-bold leading-none" id="modal-title"></h3>
+                            <p id="modalSub" class="text-slate-300 text-xs mt-1 font-medium flex items-center gap-2"></p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeStudentModal()" class="text-slate-300 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition focus:outline-none">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Scrollable Body -->
+                <div class="max-h-[75vh] overflow-y-auto">
+                    <div class="px-6 py-6 bg-slate-50 border-t border-slate-200">
+                        
+                        <!-- CURRENT SEMESTER STATUS SECTION -->
+                        <div class="mb-6 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                                        <i class="fas fa-graduation-cap text-indigo-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Viewing Context</p>
+                                        <h4 id="mSemHeader" class="text-lg font-bold text-slate-800">Semester -</h4>
+                                    </div>
+                                </div>
+                                <div id="mStatusBadge" class="flex items-center gap-2"></div>
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-2">
+                                <i class="fas fa-info-circle text-indigo-400"></i>
+                                <span>Current Active Status: <span id="mActiveStatus" class="font-bold text-slate-800">-</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Grid Layout for Details -->
+                        <div class="space-y-6">
+                            <!-- Section 1: Personal Info -->
+                            <div class="border-b border-slate-200 pb-4">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <i class="fas fa-user-circle text-slate-400"></i> Personal Information
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-id-card mr-1 text-slate-300"></i> Ticket No</label>
+                                        <div id="mTicket" class="text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-venus-mars mr-1 text-slate-300"></i> Gender</label>
+                                        <div id="mGender" class="text-sm font-semibold text-slate-800 capitalize"></div>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-mobile-alt mr-1 text-slate-300"></i> Mobile</label>
+                                        <div id="mMobile" class="text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 2: Placement Details -->
+                            <div class="border-b border-slate-200 pb-4">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <i class="fas fa-map-marker-alt text-slate-400"></i> Placement Details
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-industry mr-1 text-slate-300"></i> Plant Location</label>
+                                        <div id="mLocation" class="text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-calendar mr-1 text-slate-300"></i> Batch Year</label>
+                                        <div id="mYear" class="text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-hashtag mr-1 text-slate-300"></i> Batch No</label>
+                                        <div id="mBatch" class="text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 3: Additional Details Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-envelope mr-1"></i> Email</label>
+                                    <div id="mEmail" class="text-sm font-medium text-slate-800 truncate"></div>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-graduation-cap mr-1"></i> Diploma Branch</label>
+                                    <div id="mDiploma" class="text-sm font-medium text-slate-800"></div>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-building mr-1"></i> Department</label>
+                                    <div id="mDept" class="text-sm font-medium text-slate-800"></div>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-hashtag mr-1"></i> BC No</label>
+                                    <div id="mBc" class="text-sm font-medium text-slate-800"></div>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-cogs mr-1"></i> Function</label>
+                                    <div id="mFunction" class="text-sm font-medium text-slate-800"></div>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-user-tie mr-1"></i> Reporting Manager</label>
+                                    <div id="mManager" class="text-sm font-medium text-slate-800"></div>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-stream mr-1"></i> BITS Stream</label>
+                                    <div id="mBitsStream" class="text-sm font-medium text-slate-800"></div>
+                                </div>
+                            </div>
+
+                            <!-- DOJ Section -->
+                            <div class="pt-4 border-t border-slate-200">
+                                <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 inline-flex items-center gap-3">
+                                    <i class="fas fa-calendar-alt text-indigo-400"></i>
+                                    <div class="text-left">
+                                        <label class="block text-[10px] font-bold text-indigo-500 uppercase">Date of Joining</label>
+                                        <div id="mDoj" class="text-sm font-bold text-indigo-800"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+

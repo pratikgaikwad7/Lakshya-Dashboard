@@ -1,5 +1,14 @@
 from models.db import get_db_connection
+from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+
+
+class User(UserMixin):
+    def __init__(self, row):
+        self.id = row["id"]
+        self.username = row["username"]
+        self.role = row["role"]
+        self.plant_location = row.get("plant_location")
 
 
 def init_user_db():
@@ -52,9 +61,24 @@ def check_user_login(username, password):
 
     # Check if user exists and password matches
     if user and check_password_hash(user['password'], password):
-        return user
+        return User(user)
 
     return None
+
+
+def get_user_by_id(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT id, username, role, plant_location
+            FROM users
+            WHERE id = %s
+        """, (user_id,))
+        row = cursor.fetchone()
+        return User(row) if row else None
+    finally:
+        conn.close()
 
 
 def get_all_users():
@@ -85,6 +109,44 @@ def add_user(username, password, role, plant_location=None):
 
     conn.commit()
     conn.close()
+
+
+def ensure_admin_user(username, password):
+    """Create the configured Admin once without changing an existing account."""
+    normalized_username = (username or "").strip()
+    if not normalized_username or not password:
+        raise RuntimeError(
+            "LAKSHYA_BOOTSTRAP_ADMIN_USERNAME and "
+            "LAKSHYA_BOOTSTRAP_ADMIN_PASSWORD are required when "
+            "AUTO_CREATE_ADMIN is enabled."
+        )
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            "SELECT id, role FROM users WHERE username = %s",
+            (normalized_username,),
+        )
+        if cursor.fetchone():
+            return False
+
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO users (username, password, role, plant_location)
+            VALUES (%s, %s, 'Admin', NULL)
+            ON DUPLICATE KEY UPDATE username = username
+            """,
+            (normalized_username, generate_password_hash(password)),
+        )
+        conn.commit()
+        return cursor.rowcount == 1
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def delete_user(user_id):

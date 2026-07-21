@@ -1,0 +1,120 @@
+    <header class="sticky top-0 z-30 bg-white/95 border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="flex items-center gap-4">
+                    <a href="/evaluations" class="group flex items-center text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">
+                        <div class="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center mr-3 group-hover:bg-indigo-50 border border-slate-200 group-hover:border-indigo-200">
+                            <i class="fas fa-arrow-left text-slate-400 group-hover:text-indigo-600"></i>
+                        </div>
+                        <span class="hidden sm:inline font-semibold">Back to List</span>
+                    </a>
+                    <div class="h-8 w-px bg-slate-200 hidden md:block"></div>
+                    
+                    <!-- Semester Filter Section -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center shadow-md">
+                            <i class="fas fa-file-signature text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-lg font-bold text-slate-900 tracking-tight">Evaluation Sheet</h1>
+                            <div class="flex items-center gap-2">
+                                <!-- Semester Dropdown -->
+                                <form action="" method="GET" class="lakshya-compact-filter">
+                                    <label class="text-xs text-slate-500 font-medium uppercase">View:</label>
+                                    <select name="semester" onchange="this.form.submit()" class="lakshya-filter-control text-xs font-bold py-1 min-h-0">
+                                        {% for sem in all_semesters %}
+                                            <option value="{{ sem.semester }}" {% if sem.semester == current_semester %}selected{% endif %}>
+                                                Sem {{ sem.semester }} ({{ sem.semester_status|capitalize }})
+                                            </option>
+                                        {% else %}
+                                            <option value="{{ current_semester }}">Sem {{ current_semester }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </form>
+
+                                <!-- Status Badge Logic -->
+                                <!-- Priority 1: Student Status -->
+                                {% if student_status == 'dropped' %}
+                                    <span class="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-bold">DROPPED</span>
+                                {% elif student_status == 'completed' %}
+                                    <span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-bold">COMPLETED</span>
+                                {% else %}
+                                    <!-- Priority 2: Semester Status (If Student is Active) -->
+                                    {% if is_latest_semester and status == 'ongoing' %}
+                                        <span class="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded text-[10px] font-bold">ONGOING</span>
+                                    {% elif status == 'completed' %}
+                                        <span class="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-bold">SEM COMPLETED</span>
+                                    {% else %}
+                                         <span class="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">VIEWING</span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    
+                    <!-- ACTION BUTTONS LOGIC -->
+
+                    <!-- Case 1: Student is DROPPED -->
+                    {% if student_status == 'dropped' %}
+                        <button disabled class="bg-red-200 text-red-800 px-4 py-2 rounded-lg font-bold shadow-md transition flex items-center gap-2 text-sm cursor-not-allowed">
+                            <i class="fas fa-ban"></i> Dropped – Evaluation Locked
+                        </button>
+                    
+                    <!-- Case 2: Student is COMPLETED -->
+                    {% elif student_status == 'completed' %}
+                        <button disabled class="bg-blue-200 text-blue-800 px-4 py-2 rounded-lg font-bold shadow-md transition flex items-center gap-2 text-sm cursor-not-allowed">
+                            <i class="fas fa-check-circle"></i> Completed – Evaluation Locked
+                        </button>
+
+                    <!-- Case 3: Student is ACTIVE -->
+                    {% elif student_status == 'active' %}
+                        
+                        <!-- If viewing latest ongoing semester -->
+                        {% if is_latest_semester and status == 'ongoing' %}
+                            
+                            <!-- Logic for Sem 1-6: Promote Button -->
+                            {% if current_semester < 7 %}
+                                <form action="/evaluations/{{ student.id }}/promote" method="POST" onsubmit="return confirm('Are you sure? This will finalize Semester {{ current_semester }} and start Semester {{ current_semester + 1 }}.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg font-bold shadow-md transition flex items-center gap-2 text-sm">
+                                        <i class="fas fa-arrow-circle-right"></i> Promote to Sem {{ current_semester + 1 }}
+                                    </button>
+                                </form>
+                            {% endif %}
+
+                            <!-- Logic for Sem 7: End 7th Semester Button -->
+                            {% if current_semester == 7 %}
+                                <form action="/evaluations/{{ student.id }}/end-semester-seven" method="POST" onsubmit="return confirm('Confirm End of Semester 7? This will finalize the semester. The student status will change to Completed based on their End Date.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold shadow-md transition flex items-center gap-2 text-sm">
+                                        <i class="fas fa-flag-checkered"></i> End 7th Semester
+                                    </button>
+                                </form>
+                            {% endif %}
+
+                        {% endif %}
+                        
+                        <!-- Evaluate Button (Always available for active students to view/edit) -->
+                         <button onclick="toggleEditMode()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold shadow-md transition flex items-center gap-2 text-sm">
+                            <i class="fas fa-clipboard-check"></i> Evaluate
+                        </button>
+                        
+                    {% endif %}
+
+                    <!-- Student Profile Pill -->
+                    <div onclick="openStudentModal()" class="cursor-pointer group flex items-center bg-white border border-slate-200 rounded-full py-1.5 pl-1.5 pr-4 shadow-sm hover:border-indigo-300 hover:shadow-md transition">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs mr-2 shadow-inner">
+                            {{ student.employee_name[0]|upper }}
+                        </div>
+                        <div class="text-left">
+                            <h2 class="text-sm font-semibold text-slate-800 leading-none">{{ student.employee_name }}</h2>
+                            <p class="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1"><i class="fas fa-id-badge text-[8px]"></i> {{ student.ticket_no }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>

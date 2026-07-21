@@ -1,0 +1,118 @@
+      <!-- EDIT MODE -->
+      <form id="editForm" method="POST" action="/evaluations/{{ student.id }}?semester={{ current_semester }}" onsubmit="return confirmSave()" class="hidden">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="semester" value="{{ current_semester }}">
+
+        <div class="bg-white shadow-xl rounded-xl border border-slate-200 overflow-visible">
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center gap-3">
+                <i class="fas fa-edit text-indigo-500"></i>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">Edit Evaluation</h3>
+                    <p class="text-xs text-slate-500">Update scores for Semester {{ current_semester }}</p>
+                </div>
+            </div>
+            <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-4 space-y-6">
+                    <div class="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4">
+                        <i class="fas fa-graduation-cap text-slate-400"></i>
+                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Academic Marks</h4>
+                    </div>
+                    <div class="space-y-4">
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Training Marks</label>
+                        <div class="relative">
+                            <input type="number" name="training_marks" step="0.01" value="{{ student.training_marks or 0 }}"
+                                class="w-full text-lg font-bold text-slate-800 bg-white border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                                {% if student_status != 'active' or status != 'ongoing' %}disabled{% endif %}>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <span class="text-slate-400 text-sm font-medium">/100</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">BITS CGPA</label>
+                        <div class="relative">
+                            <input type="number" name="bits_cgpa" step="0.01" min="0" max="10" value="{{ student.bits_cgpa or 0.0 }}"
+                                class="w-full text-lg font-bold text-slate-800 bg-white border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                                {% if student_status != 'active' or status != 'ongoing' %}disabled{% endif %}>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <span class="text-slate-400 text-sm font-medium">/10</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if student_status == 'active' and status == 'ongoing' %}
+                    <div class="pt-4 border-t border-slate-200 space-y-3">
+                         <button type="submit" class="w-full px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 shadow-md transition flex items-center justify-center gap-2">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <button type="button" onclick="toggleEditMode()" class="w-full px-4 py-2 bg-white border border-slate-300 text-slate-600 font-medium rounded-lg hover:bg-slate-50 transition">
+                            Cancel
+                        </button>
+                    </div>
+                    {% else %}
+                        <div class="pt-4 border-t border-slate-200">
+                             <button type="button" onclick="toggleEditMode()" class="w-full px-4 py-2 bg-white border border-slate-300 text-slate-600 font-medium rounded-lg hover:bg-slate-50 transition">
+                                Close View
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="lg:col-span-8">
+                    <div class="flex items-center gap-2 border-b border-slate-200 pb-2 mb-4">
+                        <i class="fas fa-list-ol text-slate-400"></i>
+                        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Performance Metrics</h4>
+                    </div>
+                    <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-sm">
+                        <table class="min-w-full">
+                            <thead class="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 w-8">#</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-500">Parameter</th>
+                                    <th class="px-4 py-3 text-center text-xs font-bold text-slate-500 w-24">Score (0-10)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                {% set metrics = [
+                                    ('attendance', 'Attendance', 'fa-calendar-check'),
+                                    ('suggestions', 'Suggestions/Ideas', 'fa-lightbulb'),
+                                    ('projects', 'Projects', 'fa-project-diagram'),
+                                    ('recognitions', 'Recognitions/Appreciations', 'fa-trophy'),
+                                    ('safety', 'Safety', 'fa-hard-hat'),
+                                    ('discipline', 'Work Discipline', 'fa-user-check'),
+                                    ('bits_attendance', 'BITS Class attendance', 'fa-user-graduate'),
+                                    ('equipment', 'Equipment ownership', 'fa-tools'),
+                                    ('shop_task', 'Shop Task completion', 'fa-tasks'),
+                                    ('function_output', 'Current function understanding', 'fa-chart-line')
+                                ] %}
+                                {% for key, label, icon in metrics %}
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-2 text-slate-400 text-xs font-mono">{{ loop.index }}</td>
+                                    <td class="px-4 py-2 text-sm text-slate-700 font-medium flex items-center gap-2 whitespace-nowrap">
+                                        <i class="fas {{ icon }} text-slate-300 w-4 text-center"></i>
+                                        {{ label }}
+                                    </td>
+                                    <td class="px-4 py-2 text-center">
+                                        <input type="number"
+                                            name="score_{{ key }}"
+                                            value="{{ student['score_' + key] or 0 }}"
+                                            min="0"
+                                            max="10"
+                                            onchange="calculateTotal()"
+                                            class="score-input w-16 h-9 text-center border border-slate-300 rounded-md font-semibold text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                                            {% if student_status != 'active' or status != 'ongoing' %}disabled{% endif %}>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="bg-slate-50 border-t border-slate-200">
+                                <tr>
+                                    <td colspan="2" class="px-4 py-3 text-right font-bold text-sm text-slate-600 uppercase tracking-wide">Total</td>
+                                    <td class="px-4 py-3 text-center font-extrabold text-xl text-indigo-700 bg-white"><span id="totalScoreDisplay">0</span></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>

@@ -1,0 +1,67 @@
+    <header class="navbar-header bg-white sticky top-0 z-30 flex-shrink-0 border-b border-slate-200" style="height: clamp(3.5rem, 8vh, 4rem);">
+        <div class="max-w-full mx-auto px-4 md:px-6 h-full flex justify-between items-center">
+            <div class="flex items-center gap-2 md:gap-3">
+                <div class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-md">
+                    <i class="fas fa-rocket text-white text-sm md:text-base"></i>
+                </div>
+                <div>
+                    <h1 class="text-base md:text-xl font-bold text-slate-900 leading-none tracking-tight">Lakshya Dashboard</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 md:gap-4">
+                <div class="bg-slate-100 px-2.5 md:px-4 py-1 md:py-1.5 rounded-full text-[11px] md:text-sm font-semibold text-slate-700 flex items-center gap-1.5 md:gap-2 border border-slate-200 shadow-sm">
+                    <i class="fas fa-user-circle text-indigo-500"></i>
+                    <span class="text-slate-300 hidden sm:inline">|</span>
+                    <span class="text-indigo-600 font-bold">{{ role }}</span>
+                </div>
+                <form method="POST" action="{{ url_for('auth.logout') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="text-slate-400 hover:text-red-500 transition-colors p-1">
+                        <i class="fas fa-sign-out-alt text-base md:text-lg"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <div class="sticky-top-strip bg-white px-4 md:px-6 flex items-center gap-3 md:gap-4 flex-wrap z-20 flex-shrink-0 border-b border-slate-200" style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
+        <button id="filterToggleButton" type="button" onclick="toggleSidebar()" aria-controls="filterSidebar" aria-expanded="false" class="dashboard-filter-trigger bg-indigo-600 hover:bg-indigo-700 text-white px-3 md:px-4 py-1.5 rounded-lg font-bold text-xs md:text-sm transition flex items-center gap-2 shadow-sm">
+            <i class="fas fa-sliders-h"></i>
+            <span>Filters</span>
+        </button>
+        <div class="h-5 w-px bg-slate-200 hidden md:block"></div>
+        <div id="activeFilterSummary" class="flex items-center gap-2 md:gap-3 flex-wrap flex-1" aria-live="polite">
+            {% set has_filters = false %}
+            {% for key, value in filters.items() %}
+                {% if value and key != 'student_status' and key != 'ticket_no' %}
+                    {% if value is iterable and value is not string %}
+                        {% for item in value %}
+                            {% set has_filters = true %}
+                            <span class="active-filter-tag">
+                                <span class="capitalize">{{ key.replace('_', ' ') }}</span>: 
+                                <span class="font-bold">
+                                    {% if key == 'year' %}
+                                        {% set yr = item|int %}
+                                        {% set suffix = ((yr + 1)|string)[-2:] %}
+                                        {{ yr }}-{{ suffix }}
+                                    {% elif key == 'plant_location' %}
+                                        {{ item.replace('_', ' ') }}
+                                    {% else %}
+                                        {{ item }}
+                                    {% endif %}
+                                </span>
+                            </span>
+                        {% endfor %}
+                    {% elif value is string and value != '' %}
+                        {% set has_filters = true %}
+                         <span class="active-filter-tag">
+                            <span class="capitalize">{{ key.replace('_', ' ') }}</span>: 
+                            <span class="font-bold">{{ value }}</span>
+                        </span>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            {% if not has_filters %}
+            {% endif %}
+        </div>
+    </div>

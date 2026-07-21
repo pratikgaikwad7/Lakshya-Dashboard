@@ -1,0 +1,5 @@
+        .checkbox-dropdown-menu { max-height: 250px; overflow-y: auto; }
+        .checkbox-dropdown-menu::-webkit-scrollbar { width: 6px; }
+        .checkbox-dropdown-menu::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
+    
+

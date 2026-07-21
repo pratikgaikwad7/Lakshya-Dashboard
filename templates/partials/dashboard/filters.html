@@ -1,0 +1,119 @@
+        <aside id="filterSidebar" class="filter-sidebar bg-white flex-shrink-0 h-full" aria-hidden="true" aria-label="Dashboard filters">
+            <div class="sidebar-content h-full flex flex-col">
+                <div class="filter-sidebar-header px-4 md:px-5 py-4 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="filter-header-icon"><i class="fas fa-sliders-h"></i></span>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-xs md:text-sm font-bold text-slate-800 uppercase tracking-wider">Smart Filters</h3>
+                                <span class="filter-live-indicator"><span></span>Live</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Refine dashboard intelligence</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="toggleSidebar(false)" class="filter-close-button text-slate-400 hover:text-red-500 transition" aria-label="Close filters">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+
+                <form id="dashboardFilterForm" action="{{ url_for('user_dashboard.dashboard') }}" method="GET" class="filter-form flex-1 overflow-y-auto px-4 md:px-5 py-4 md:py-5 space-y-4">
+                    
+                    {% macro checkbox_filter(name, label, options, selected_values) %}
+                    <div class="filter-group relative" data-filter-name="{{ name }}">
+                        <label class="block text-[11px] md:text-sm font-semibold text-slate-600 mb-1">{{ label }}</label>
+                        <button type="button" onclick="toggleDropdown('dropdown_{{ name }}', this)" aria-haspopup="true" aria-expanded="false" class="filter-select-button input-field text-left flex justify-between items-center w-full rounded-md border border-slate-200 bg-white px-2 md:px-3 py-2 text-[10px] md:text-xs font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
+                            <span id="btn_label_{{ name }}" class="truncate pr-2">
+                                {% if selected_values %} 
+                                    {{ selected_values|length }} Selected 
+                                {% else %} 
+                                    All 
+                                {% endif %}
+                            </span>
+                            <span class="filter-control-icon"><i class="fas fa-chevron-down text-[8px]"></i></span>
+                        </button>
+                        <div id="dropdown_{{ name }}" class="checkbox-dropdown-menu hidden absolute z-30 mt-1 w-full rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 p-2">
+                            <div class="flex justify-between mb-1 border-b pb-1">
+                                <button type="button" onclick="selectAll('{{ name }}')" class="text-[9px] text-indigo-500 font-bold hover:text-indigo-700">Select All</button>
+                                <button type="button" onclick="clearSelection('{{ name }}')" class="text-[9px] text-red-500 font-bold hover:text-red-700">Clear</button>
+                            </div>
+                            <div class="space-y-1">
+                                {% for opt in options %}
+                                    {% set opt_val = opt|string %}
+                                    {% set is_checked = opt_val in selected_values %}
+                                    <label class="flex items-center px-2 py-1 hover:bg-slate-50 rounded cursor-pointer text-[11px]">
+                                        <input type="checkbox" name="{{ name }}" value="{{ opt_val }}" class="mr-2 rounded text-indigo-600" {% if is_checked %}checked{% endif %} onchange="updateDropdownLabel('{{ name }}')"> 
+                                        {% if name == 'year' %}
+                                            {{ opt }}-{{ ((opt + 1)|string)[-2:] }}
+                                        {% elif name == 'plant_location' %}
+                                            {{ opt.replace('_', ' ') }}
+                                        {% else %}
+                                            {{ opt }}
+                                        {% endif %}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endmacro %}
+
+                    <div class="filter-section space-y-3">
+                        <h4 class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                            <i class="fas fa-graduation-cap mr-1"></i> Academic Details
+                        </h4>
+ 
+                        {{ checkbox_filter('student_status', 'Status', ['active', 'dropped', 'completed'], filters.student_status) }}
+                        {{ checkbox_filter('semester', 'Semester', sem_numbers, filters.semester) }}
+                        {{ checkbox_filter('year', 'Batch Year', filter_options.years, filters.year) }}
+                        {{ checkbox_filter('batch_no', 'Batch No', batch_numbers, filters.batch_no) }}
+                    </div>
+
+                    <div class="filter-section space-y-3">
+                        <h4 class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                            <i class="fas fa-briefcase mr-1"></i> Professional Details
+                        </h4>
+                        
+                        {{ checkbox_filter('department', 'Department', filter_options.departments, filters.department) }}
+                        {{ checkbox_filter('bits_stream', 'BITS Stream', bits_streams, filters.bits_stream) }}
+                        {{ checkbox_filter('function', 'Function', functions, filters.function) }}
+
+                        {% set plant_disabled = (role == 'SDC Coordinator') %}
+                        {% if plant_disabled %}
+                            <div class="filter-group relative">
+                                <label class="block text-[11px] md:text-sm font-semibold text-slate-600 mb-1">Plant Location</label>
+                                {% for loc in filters.plant_location %}
+                                    <input type="hidden" name="plant_location" value="{{ loc }}">
+                                {% endfor %}
+                                <div class="input-field bg-slate-100 text-slate-500 text-[10px] md:text-xs px-2 md:px-3 py-1 rounded-md border border-slate-200 cursor-not-allowed">
+                                    {{ filters.plant_location[0].replace('_', ' ') }}
+                                </div>
+                            </div>
+                        {% else %}
+                            {{ checkbox_filter('plant_location', 'Plant Location', locations, filters.plant_location) }}
+                        {% endif %}
+                    </div>
+
+                    <div class="filter-section space-y-3">
+                        <h4 class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                            <i class="fas fa-user mr-1"></i> Personal Details
+                        </h4>
+                        
+                        {{ checkbox_filter('gender', 'Gender', genders, filters.gender) }}
+                        {{ checkbox_filter('branch', 'Diploma Branch', branches, filters.branch) }}
+                        
+                        <div class="filter-group">
+                            <label class="block text-[11px] md:text-sm font-semibold text-slate-600 mb-1">Ticket No</label>
+                            <input type="text" name="ticket_no" value="{{ filters.ticket_no }}" placeholder="Search Ticket..." class="input-field">
+                        </div>
+                    </div>
+
+                    <div class="filter-actions pt-3 space-y-2 sticky bottom-0 pb-4 mt-4">
+                        <button id="applyFiltersButton" type="submit" class="filter-apply-button w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-bold text-xs md:text-sm shadow-md transition flex items-center justify-center gap-2">
+                            <i class="fas fa-check-circle"></i> Apply Filters
+                        </button>
+                        <a href="{{ url_for('user_dashboard.dashboard') }}" class="filter-reset-button w-full bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-bold text-xs md:text-sm transition text-center block">
+                            Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </aside>

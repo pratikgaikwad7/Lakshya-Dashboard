@@ -1,29 +1,22 @@
-from flask import Blueprint, render_template, session, redirect, url_for
+from flask import Blueprint, render_template
+from flask_login import current_user
 # Import the stats function from evaluation_model
 from models.evaluation_model import get_evaluation_dashboard_stats
+from security.access import assigned_plant_required, roles_required
 
 admin_bp = Blueprint('admin', __name__)
 
 @admin_bp.route('/admin-dashboard')
+@roles_required('Admin', 'PMO', 'SDC Coordinator')
 def admin_dashboard():
-    # Login required
-    if 'username' not in session:
-        return redirect('/login')
-
-    role = session.get('role')
-    
-    # Allowed roles
-    if role not in ['Admin', 'PMO', 'SDC Coordinator']:
-        return "Access Denied"
+    role = current_user.role
 
     # --- FETCH STATS ---
     filters = {} 
     
     # SDC Coordinator: Filter by their assigned plant location
     if role == 'SDC Coordinator':
-        plant_location = session.get('plant_location')
-        if plant_location:
-            filters['plant_location'] = plant_location
+        filters['plant_location'] = assigned_plant_required()
     
     # Get comprehensive stats
     stats_data = get_evaluation_dashboard_stats(filters)
@@ -31,7 +24,7 @@ def admin_dashboard():
 
     return render_template(
         'admin_dashboard.html',
-        user_name=session.get('username', 'Admin'),
+        user_name=current_user.username,
         stats=summary,
         role=role  # Pass role to template for UI logic
     )

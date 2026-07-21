@@ -1,0 +1,123 @@
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-auto p-6 bg-slate-100">
+            <div class="max-w-full mx-auto">
+                <!-- Table Container -->
+                <div class="bg-white shadow-sm rounded-xl overflow-hidden border border-slate-200">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-100">
+                            <thead class="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student Profile</th>
+                                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Semester</th>
+                                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Location</th>
+                                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Department</th>
+                                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">BITS Stream</th>
+                                    <th class="px-4 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-amber-50">Training (20)</th>
+                                    <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-purple-50">BITS CGPA (30)</th>
+                                    <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-blue-50">OJT (50)</th>
+                                    <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-100">Total</th>
+                                    <th class="px-4 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-slate-100">
+                                {% for student in students %}
+                                <tr class="hover:bg-slate-50 transition-colors group">
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div onclick='openStudentModal({{ student | tojson }})' class="flex items-center cursor-pointer group">
+                                            <div class="flex-shrink-0 h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-md group-hover:shadow-lg transition-shadow">
+                                                {{ student.employee_name[0]|upper }}
+                                            </div>
+                                            <div class="ml-3">
+                                                <div class="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">{{ student.employee_name }}</div>
+                                                <div class="text-[10px] text-slate-400 font-medium uppercase">{{ student.gender }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="text-sm font-bold text-slate-800">Sem {{ student.semester or '-' }}</div>
+                                        <div class="text-[10px] text-slate-500 capitalize">{{ student.semester_status or 'N/A' }}</div>
+                                    </td>
+
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-slate-800">{{ student.plant_location or '-' }}</div>
+                                    </td>
+
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-600 font-medium">{{ student.department or '-' }}</td>
+
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-600 font-medium">{{ student.bits_stream or '-' }}</td>
+                                    
+                                    <!-- Status Column Logic -->
+                                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                                        {% if student.student_status == 'dropped' %}
+                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-red-50 text-red-700 border border-red-100">
+                                                <i class="fas fa-ban mr-1 mt-0.5"></i> Dropped
+                                            </span>
+                                        {% elif student.student_status == 'completed' %}
+                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                                                <i class="fas fa-user-graduate mr-1 mt-0.5"></i> Completed
+                                            </span>
+                                        {% else %}
+                                            {% if student.semester_status == 'completed' %}
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-green-50 text-green-700 border border-green-100">
+                                                    <i class="fas fa-check-circle mr-1 mt-0.5"></i> Sem Completed
+                                                </span>
+                                            {% elif student.semester_status == 'ongoing' %}
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-yellow-50 text-yellow-700 border border-yellow-100">
+                                                    <i class="fas fa-spinner fa-spin mr-1 mt-0.5"></i> Ongoing
+                                                </span>
+                                            {% else %}
+                                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-slate-50 text-slate-500 border border-slate-100">
+                                                    <i class="fas fa-minus-circle mr-1 mt-0.5"></i> No Record
+                                                </span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="px-3 py-3 whitespace-nowrap text-center bg-amber-50/50 group-hover:bg-amber-50 transition-colors">
+                                        <span class="text-sm font-bold text-amber-700">{{ student.final_eval.training_total | round(1) }}</span>
+                                    </td>
+                                    <td class="px-3 py-3 whitespace-nowrap text-center bg-purple-50/50 group-hover:bg-purple-50 transition-colors">
+                                        <span class="text-sm font-bold text-purple-700">{{ student.final_eval.bits_total | round(2) }}</span>
+                                    </td>
+                                    <td class="px-3 py-3 whitespace-nowrap text-center bg-blue-50/50 group-hover:bg-blue-50 transition-colors">
+                                        <span class="text-sm font-bold text-blue-700">{{ student.final_eval.ojt_total | round(1) }}</span>
+                                    </td>
+                                    <td class="px-3 py-3 whitespace-nowrap text-center bg-slate-50 group-hover:bg-slate-100 transition-colors">
+                                        <span class="text-base font-extrabold text-slate-900">{{ student.final_eval.grand_total | round(1) }}</span>
+                                    </td>
+
+                                    <!-- Action Column Logic -->
+                                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                                        {% if student.student_status == 'dropped' %}
+                                            <button disabled class="inline-flex items-center bg-red-100 text-red-700 px-4 py-1.5 rounded-md text-xs font-bold border border-red-200 cursor-not-allowed">
+                                                <i class="fas fa-ban mr-1.5"></i> Dropped
+                                            </button>
+                                        {% elif student.student_status == 'completed' %}
+                                             <button disabled class="inline-flex items-center bg-blue-100 text-blue-700 px-4 py-1.5 rounded-md text-xs font-bold border border-blue-200 cursor-not-allowed">
+                                                <i class="fas fa-check-circle mr-1.5"></i> Completed
+                                            </button>
+                                        {% else %}
+                                            <a href="/evaluations/{{ student.id }}{% if student.semester %}?semester={{ student.semester }}{% endif %}" 
+                                               class="inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-md text-xs font-bold shadow-sm transition">
+                                                <i class="fas fa-edit mr-1.5"></i> Evaluate
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="11" class="text-center py-10 text-slate-500">
+                                        <i class="fas fa-filter text-2xl mb-2 text-slate-300"></i>
+                                        <p>No records found matching your filters.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+

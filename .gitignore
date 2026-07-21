@@ -1,0 +1,35 @@
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Packaging and tooling
+build/
+dist/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Runtime files
+*.log
+instance/
+uploads/
+

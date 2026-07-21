@@ -1,0 +1,137 @@
+    <!-- STUDENT PROFILE MODAL -->
+    <div id="studentModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-60 transition-opacity" onclick="closeStudentModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl w-full border border-slate-200">
+                <div class="bg-slate-800 px-6 py-5 flex justify-between items-center relative">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-full bg-white text-slate-800 flex items-center justify-center font-bold text-xl shadow-lg border-4 border-white/20">
+                            {{ student.employee_name[0]|upper }}
+                        </div>
+                        <div class="text-white text-left">
+                            <h3 class="text-xl font-bold leading-none" id="modal-title">{{ student.employee_name }}</h3>
+                            <p class="text-slate-300 text-xs mt-1 font-medium flex items-center gap-2">
+                                <span>{{ student.department or 'Unknown Dept' }}</span> 
+                                <span class="w-1 h-1 rounded-full bg-slate-500"></span> 
+                                <span>{{ student.ticket_no }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeStudentModal()" class="text-slate-300 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition focus:outline-none">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+
+                <div class="px-6 py-6 bg-slate-50 border-t border-slate-200">
+                    
+                    <!-- CURRENT SEMESTER STATUS SECTION -->
+                    <div class="mb-6 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                                    <i class="fas fa-graduation-cap text-indigo-600"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Current Academic Status</p>
+                                    <h4 class="text-lg font-bold text-slate-800">Semester {{ active_semester }}</h4>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                {% if student_status == 'dropped' %}
+                                     <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">DROPPED</span>
+                                {% elif student_status == 'completed' %}
+                                     <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">COMPLETED</span>
+                                {% else %}
+                                     <span class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">ACTIVE</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8">
+                        <div class="space-y-6 md:col-span-1 lg:col-span-3 border-b border-slate-200 pb-4 mb-2">
+                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <i class="fas fa-user-circle text-slate-400"></i> Personal Information
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-id-card mr-1 text-slate-300"></i> Ticket No</label>
+                                    <div class="text-sm font-semibold text-slate-800">{{ student.ticket_no }}</div>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-venus-mars mr-1 text-slate-300"></i> Gender</label>
+                                    <div class="text-sm font-semibold text-slate-800 capitalize">{{ student.gender }}</div>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-mobile-alt mr-1 text-slate-300"></i> Mobile</label>
+                                    <div class="text-sm font-semibold text-slate-800">{{ student.mobile_no }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6 md:col-span-1 lg:col-span-3 border-b border-slate-200 pb-4 mb-2">
+                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <i class="fas fa-map-marker-alt text-slate-400"></i> Placement Details
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-industry mr-1 text-slate-300"></i> Plant Location</label>
+                                    <div class="text-sm font-semibold text-slate-800">{{ student.plant_location or 'N/A' }}</div>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-calendar mr-1 text-slate-300"></i> Batch Year</label>
+                                    <div class="text-sm font-semibold text-slate-800">{{ student.batch_year or 'N/A' }}</div>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg shadow-xs border border-slate-100">
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1"><i class="fas fa-hashtag mr-1 text-slate-300"></i> Batch No</label>
+                                    <div class="text-sm font-semibold text-slate-800">{{ student.batch_no or 'N/A' }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase"><i class="fas fa-envelope mr-1"></i> Email Address</label>
+                            <div class="text-sm font-medium text-slate-800 bg-white px-3 py-2 rounded border border-slate-100 shadow-xs truncate">{{ student.email or 'N/A' }}</div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase"><i class="fas fa-graduation-cap mr-1"></i> Diploma Branch</label>
+                            <div class="text-sm font-medium text-slate-800 bg-white px-3 py-2 rounded border border-slate-100 shadow-xs">{{ student.diploma_branch or 'N/A' }}</div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase"><i class="fas fa-building mr-1"></i> Department</label>
+                            <div class="text-sm font-medium text-slate-800 bg-white px-3 py-2 rounded border border-slate-100 shadow-xs">{{ student.department or 'N/A' }}</div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase"><i class="fas fa-user-tie mr-1"></i> Reporting Manager</label>
+                            <div class="text-sm font-medium text-slate-800 bg-white px-3 py-2 rounded border border-slate-100 shadow-xs">{{ student.reporting_manager or 'N/A' }}</div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase"><i class="fas fa-hashtag mr-1"></i> BC No</label>
+                            <div class="text-sm font-medium text-slate-800 bg-white px-3 py-2 rounded border border-slate-100 shadow-xs">{{ student.bc_no or 'N/A' }}</div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase"><i class="fas fa-cogs mr-1"></i> Function</label>
+                            <div class="text-sm font-medium text-slate-800 bg-white px-3 py-2 rounded border border-slate-100 shadow-xs">{{ student.function or 'N/A' }}</div>
+                        </div>
+                        <!-- NEW: BITS Stream -->
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase"><i class="fas fa-stream mr-1"></i> BITS Stream</label>
+                            <div class="text-sm font-medium text-slate-800 bg-white px-3 py-2 rounded border border-slate-100 shadow-xs">{{ student.bits_stream or 'N/A' }}</div>
+                        </div>
+                        <div class="space-y-1 md:col-span-2 lg:col-span-3 mt-2 pt-4 border-t border-slate-200">
+                            <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 inline-flex items-center gap-3">
+                                <i class="fas fa-calendar-alt text-indigo-400"></i>
+                                <div class="text-left">
+                                    <label class="block text-[10px] font-bold text-indigo-500 uppercase">Date of Joining</label>
+                                    <div class="text-sm font-bold text-indigo-800">{{ student.date_of_joining or 'N/A' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+

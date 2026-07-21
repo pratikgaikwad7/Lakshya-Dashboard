@@ -1,231 +1,114 @@
-from flask import Blueprint, render_template, request, session, redirect, jsonify
+from flask import Blueprint, jsonify, render_template, request
+from flask_login import current_user, login_required
+
+from exceptions import ValidationError
 from models.evaluation_model import (
-    get_evaluation_dashboard_stats, 
-    get_distinct_semesters, 
-    get_gender_options,
-    get_filtered_students_for_eval,
     calculate_final_evaluation,
-    get_location_breakdown,
-    get_batch_breakdown,
-    get_distinct_branches,
-    get_distinct_functions,
-    get_distinct_locations,
-    get_distinct_batch_nos,
-    get_distinct_bits_streams,
-    get_performance_distribution,
     get_attrition_by_location,
+    get_batch_breakdown,
+    get_branch_location_breakdown,
+    get_distinct_locations,
+    get_distinct_semesters,
+    get_evaluation_dashboard_stats,
+    get_filtered_students_for_eval,
+    get_gender_options,
+    get_location_breakdown,
+    get_performance_distribution,
     get_students_by_score_range,
-    get_branch_location_breakdown
 )
 from models.student_model import get_filter_options
+from schemas.dashboard import dashboard_filters_from_json, dashboard_filters_from_query
+from security.access import PLANT_RESTRICTED_ROLES, assigned_plant_required, force_plant_scope
+
 
 user_dashboard_bp = Blueprint('user_dashboard', __name__)
 
-RESTRICTED_ROLES = ['SDC Coordinator', 'HR Head']
 
 @user_dashboard_bp.route('/user_dashboard', methods=['GET'])
+@login_required
 def dashboard():
-    if 'username' not in session:
-        return redirect('/login')
-    
-    role = session.get('role')
-    user_loc = session.get('plant_location')
-    username = session.get('username')
-    
-    # FILTERS: Use getlist for all multi-selects
-    filters = {
-        'semester': request.args.getlist('semester'),
-        'status': request.args.getlist('status'),  
-        'year': request.args.getlist('year'),
-        'batch_no': request.args.getlist('batch_no'),
-        'branch': request.args.getlist('branch'),
-        'department': request.args.getlist('department'),
-        'gender': request.args.getlist('gender'),
-        'function': request.args.getlist('function'),
-        'bits_stream': request.args.getlist('bits_stream'),
-        'plant_location': request.args.getlist('plant_location'),
-        'ticket_no': request.args.get('ticket_no', '') # Single text field
-    }
+    filters = force_plant_scope(dashboard_filters_from_query(request.args))
+    role = current_user.role
 
-    # Default status logic if nothing is selected
-    if not filters['status']:
-        filters['status'] = ['active']
-
-    # RBAC Logic for Plant Location
-    if role in RESTRICTED_ROLES and user_loc:
-        # Override plant_location filter for restricted roles
-        filters['plant_location'] = [user_loc]
-
-    # Data Fetch Logic
     all_locations = get_distinct_locations()
-
-    if role in RESTRICTED_ROLES and user_loc:
-        locations = [loc for loc in all_locations if loc == user_loc]
+    if role in PLANT_RESTRICTED_ROLES:
+        location = assigned_plant_required()
+        locations = [location]
+        filter_options = get_filter_options(plant_location_restriction=location)
     else:
         locations = all_locations
+        filter_options = get_filter_options()
 
-    filter_options = get_filter_options()
-    sem_numbers = get_distinct_semesters()
-    genders = get_gender_options()
-    branches = get_distinct_branches()
-    functions = get_distinct_functions()
-    batch_numbers = get_distinct_batch_nos()
-    bits_streams = get_distinct_bits_streams()
-
-    stats_data = get_evaluation_dashboard_stats(filters)
-    students_data = get_filtered_students_for_eval(filters)
-
-    for student in students_data:
+    students = get_filtered_students_for_eval(filters)
+    for student in students:
         student['final_eval'] = calculate_final_evaluation(student)
 
-    location_raw = get_location_breakdown(filters)
     location_stats = []
-    for loc in location_raw:
-        total = loc['total']
-        male = loc['male']
-        female = loc['female']
-        male_pct = round((male / total) * 100, 1) if total > 0 else 0
-        female_pct = round((female / total) * 100, 1) if total > 0 else 0
+    for location in get_location_breakdown(filters):
+        total = location['total']
         location_stats.append({
-            'location': loc['location'],
+            'location': location['location'],
             'total': total,
-            'male_pct': male_pct,
-            'female_pct': female_pct
+            'male_pct': round((location['male'] / total) * 100, 1) if total else 0,
+            'female_pct': round((location['female'] / total) * 100, 1) if total else 0,
         })
 
-    attrition_filters = filters.copy()
-    attrition_filters.pop('status', None)
-    
-    attrition_raw = get_attrition_by_location(attrition_filters)
+    attrition_filters = dict(filters)
+    attrition_filters.pop('student_status', None)
     attrition_data = []
-    for row in attrition_raw:
+    for row in get_attrition_by_location(attrition_filters):
         total = row['total_students']
-        dropped = row['dropped_students']
-        attrition_pct = round((dropped / total) * 100, 1) if total > 0 else 0
         attrition_data.append({
             'location': row['location'],
-            'attrition_pct': attrition_pct
+            'attrition_pct': round((row['dropped_students'] / total) * 100, 1) if total else 0,
         })
-
-    batch_stats_pivot = get_batch_breakdown(filters)
-    branch_stats_pivot = get_branch_location_breakdown(filters)
-    performance_data = get_performance_distribution(filters, score_type='bits')
 
     return render_template(
         'user_dashboard.html',
-        stats=stats_data['summary'],
-        students=students_data,
+        stats=get_evaluation_dashboard_stats(filters)['summary'],
+        students=students,
         filters=filters,
         filter_options=filter_options,
-        sem_numbers=sem_numbers,
-        genders=genders,
-        performance_data=performance_data,
+        sem_numbers=get_distinct_semesters(),
+        genders=get_gender_options(),
+        performance_data=get_performance_distribution(filters, score_type='bits'),
         location_stats=location_stats,
         attrition_data=attrition_data,
-        batch_stats=batch_stats_pivot,
-        branch_stats=branch_stats_pivot,
-        branches=branches,
-        functions=functions,
+        batch_stats=get_batch_breakdown(filters),
+        branch_stats=get_branch_location_breakdown(filters),
+        branches=filter_options['branches'],
+        functions=filter_options['functions'],
         locations=locations,
-        batch_numbers=batch_numbers,
-        bits_streams=bits_streams,
+        batch_numbers=filter_options['batch_nos'],
+        bits_streams=filter_options['bits_streams'],
         role=role,
-        username=username
+        username=current_user.username,
     )
 
 
 @user_dashboard_bp.route('/get-performance-data', methods=['POST'])
+@login_required
 def get_performance_data_api():
-    data = request.get_json()
-
-    # Helper to ensure list
-    def ensure_list(val):
-        if isinstance(val, list): return val
-        if val: return [val]
-        return []
-
-    filters = {
-        'year': ensure_list(data.get('year')),
-        'plant_location': ensure_list(data.get('plant_location')),
-        'semester': ensure_list(data.get('semester')),
-        'status': ensure_list(data.get('status')),
-        'bits_stream': ensure_list(data.get('bits_stream')),
-        'gender': ensure_list(data.get('gender')),
-        'department': data.get('department'),
-        'function': data.get('function'),
-        'branch': data.get('branch'),
-        'batch_no': data.get('batch_no'),
-        'ticket_no': data.get('ticket_no')
-    }
-    
-    if filters.get('status'):
-        filters['student_status'] = filters['status']
-
-    role = session.get('role')
-    user_loc = session.get('plant_location')
-
-    if role in RESTRICTED_ROLES and user_loc:
-        requested_plants = filters.get('plant_location', [])
-        if requested_plants:
-            allowed = [p for p in requested_plants if p == user_loc]
-            filters['plant_location'] = allowed
-        else:
-            filters['plant_location'] = [user_loc]
-
-    score_type = data.get('score_type', 'all')
-    chart_data = get_performance_distribution(filters, score_type)
-    return jsonify(chart_data)
+    data = request.get_json(silent=True)
+    filters = force_plant_scope(dashboard_filters_from_json(data))
+    score_type = _validated_score_type(data.get('score_type', 'all'))
+    return jsonify(get_performance_distribution(filters, score_type))
 
 
 @user_dashboard_bp.route('/get-students-in-range', methods=['POST'])
+@login_required
 def get_students_in_range_api():
-    data = request.get_json()
-
-    range_label = data.get('range', '')
-    score_type = data.get('score_type', 'all')
-
+    data = request.get_json(silent=True)
+    filters = force_plant_scope(dashboard_filters_from_json(data))
+    score_type = _validated_score_type(data.get('score_type', 'all'))
     try:
-        parts = range_label.split('-')
-        min_val = float(parts[0])
-        max_val = float(parts[1])
-    except:
-        return jsonify([])
-    
-    def ensure_list(val):
-        if isinstance(val, list): return val
-        if val: return [val]
-        return []
-
-    filters = {
-        'year': ensure_list(data.get('year')),
-        'plant_location': ensure_list(data.get('plant_location')),
-        'semester': ensure_list(data.get('semester')),
-        'status': ensure_list(data.get('status')),
-        'bits_stream': ensure_list(data.get('bits_stream')),
-        'gender': ensure_list(data.get('gender')),
-        'department': data.get('department'),
-        'function': data.get('function'),
-        'branch': data.get('branch')
-    }
-
-    if filters.get('status'):
-        filters['student_status'] = filters['status']
-
-    role = session.get('role')
-    user_loc = session.get('plant_location')
-
-    if role in RESTRICTED_ROLES and user_loc:
-        requested_plants = filters.get('plant_location', [])
-        if requested_plants:
-            allowed = [p for p in requested_plants if p == user_loc]
-            filters['plant_location'] = allowed
-        else:
-            filters['plant_location'] = [user_loc]
-
-    students = get_students_by_score_range(filters, min_val, max_val, score_type)
-    return jsonify(students)
+        minimum, maximum = (float(part) for part in str(data.get('range', '')).split('-', 1))
+    except (TypeError, ValueError) as error:
+        raise ValidationError('Invalid score range.') from error
+    return jsonify(get_students_by_score_range(filters, minimum, maximum, score_type))
 
 
-
-
-    
+def _validated_score_type(value):
+    if value not in {'all', 'bits', 'ojt', 'training'}:
+        raise ValidationError('Invalid score type.')
+    return value
