@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard | LAKSHYA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_dashboard.css') }}">
+    <style>
+        .checkbox-dropdown-menu { max-height: 250px; overflow-y: auto; }
+        .checkbox-dropdown-menu::-webkit-scrollbar { width: 6px; }
+        .checkbox-dropdown-menu::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased h-screen flex flex-col">
+
+    <header class="navbar-header bg-white sticky top-0 z-30 flex-shrink-0 border-b border-slate-200" style="height: clamp(3.5rem, 8vh, 4rem);">
+        <div class="max-w-full mx-auto px-4 md:px-6 h-full flex justify-between items-center">
+            <div class="flex items-center gap-2 md:gap-3">
+                <div class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-md">
+                    <i class="fas fa-rocket text-white text-sm md:text-base"></i>
+                </div>
+                <div>
+                    <h1 class="text-base md:text-xl font-bold text-slate-900 leading-none tracking-tight">Lakshya Dashboard</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 md:gap-4">
+                <div class="bg-slate-100 px-2.5 md:px-4 py-1 md:py-1.5 rounded-full text-[11px] md:text-sm font-semibold text-slate-700 flex items-center gap-1.5 md:gap-2 border border-slate-200 shadow-sm">
+                    <i class="fas fa-user-circle text-indigo-500"></i>
+                    <span class="text-slate-300 hidden sm:inline">|</span>
+                    <span class="text-indigo-600 font-bold">{{ role }}</span>
+                </div>
+                <a href="/logout" class="text-slate-400 hover:text-red-500 transition-colors p-1">
+                    <i class="fas fa-sign-out-alt text-base md:text-lg"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="sticky-top-strip bg-white px-4 md:px-6 flex items-center gap-3 md:gap-4 flex-wrap z-20 flex-shrink-0 border-b border-slate-200" style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
+        <button onclick="toggleSidebar()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 md:px-4 py-1.5 rounded-lg font-bold text-xs md:text-sm transition flex items-center gap-2 shadow-sm">
+            <i class="fas fa-sliders-h"></i>
+            <span>Filters</span>
+        </button>
+        <div class="h-5 w-px bg-slate-200 hidden md:block"></div>
+        <div class="flex items-center gap-2 md:gap-3 flex-wrap flex-1">
+            {% set has_filters = false %}
+            {% for key, value in filters.items() %}
+                {% if value and key != 'student_status' and key != 'ticket_no' %}
+                    {% if value is iterable and value is not string %}
+                        {% for item in value %}
+                            {% set has_filters = true %}
+                            <span class="active-filter-tag">
+                                <span class="capitalize">{{ key.replace('_', ' ') }}</span>: 
+                                <span class="font-bold">
+                                    {% if key == 'year' %}
+                                        {% set yr = item|int %}
+                                        {% set suffix = ((yr + 1)|string)[-2:] %}
+                                        {{ yr }}-{{ suffix }}
+                                    {% elif key == 'plant_location' %}
+                                        {{ item.replace('_', ' ') }}
+                                    {% else %}
+                                        {{ item }}
+                                    {% endif %}
+                                </span>
+                            </span>
+                        {% endfor %}
+                    {% elif value is string and value != '' %}
+                        {% set has_filters = true %}
+                         <span class="active-filter-tag">
+                            <span class="capitalize">{{ key.replace('_', ' ') }}</span>: 
+                            <span class="font-bold">{{ value }}</span>
+                        </span>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            {% if not has_filters %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="flex-1 flex overflow-hidden">
+
+        <aside id="filterSidebar" class="filter-sidebar bg-white flex-shrink-0 h-full">
+            <div class="sidebar-content h-full flex flex-col">
+                <div class="px-4 md:px-6 py-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-filter text-indigo-500 text-sm"></i>
+                        <h3 class="text-xs md:text-sm font-bold text-slate-800 uppercase tracking-wider">Filters</h3>
+                    </div>
+                    <button onclick="toggleSidebar()" class="text-slate-400 hover:text-red-500 transition p-1 hover:bg-red-50 rounded-full">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+
+                <form action="{{ url_for('user_dashboard.dashboard') }}" method="GET" class="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-5 space-y-4">
+                    
+                    {% macro checkbox_filter(name, label, options, selected_values) %}
+                    <div class="filter-group relative">
+                        <label class="block text-[11px] md:text-sm font-semibold text-slate-600 mb-1">{{ label }}</label>
+                        <button type="button" onclick="toggleDropdown('dropdown_{{ name }}')" class="input-field text-left flex justify-between items-center w-full rounded-md border border-slate-200 bg-white px-2 md:px-3 py-1 text-[10px] md:text-xs font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
+                            <span id="btn_label_{{ name }}" class="truncate pr-2">
+                                {% if selected_values %} 
+                                    {{ selected_values|length }} Selected 
+                                {% else %} 
+                                    All 
+                                {% endif %}
+                            </span>
+                            <i class="fas fa-chevron-down ml-1 text-[8px]"></i>
+                        </button>
+                        <div id="dropdown_{{ name }}" class="checkbox-dropdown-menu hidden absolute z-30 mt-1 w-full rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 p-2">
+                            <div class="flex justify-between mb-1 border-b pb-1">
+                                <button type="button" onclick="selectAll('{{ name }}')" class="text-[9px] text-indigo-500 font-bold hover:text-indigo-700">Select All</button>
+                                <button type="button" onclick="clearSelection('{{ name }}')" class="text-[9px] text-red-500 font-bold hover:text-red-700">Clear</button>
+                            </div>
+                            <div class="space-y-1">
+                                {% for opt in options %}
+                                    {% set opt_val = opt|string %}
+                                    {% set is_checked = opt_val in selected_values %}
+                                    <label class="flex items-center px-2 py-1 hover:bg-slate-50 rounded cursor-pointer text-[11px]">
+                                        <input type="checkbox" name="{{ name }}" value="{{ opt_val }}" class="mr-2 rounded text-indigo-600" {% if is_checked %}checked{% endif %} onchange="updateDropdownLabel('{{ name }}')"> 
+                                        {% if name == 'year' %}
+                                            {{ opt }}-{{ ((opt + 1)|string)[-2:] }}
+                                        {% elif name == 'plant_location' %}
+                                            {{ opt.replace('_', ' ') }}
+                                        {% else %}
+                                            {{ opt }}
+                                        {% endif %}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endmacro %}
+
+                    <div class="space-y-3">
+                        <h4 class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                            <i class="fas fa-graduation-cap mr-1"></i> Academic Details
+                        </h4>
+ 
+                        {{ checkbox_filter('status', 'Status', ['active', 'dropped', 'completed'], filters.status) }}
+                        {{ checkbox_filter('semester', 'Semester', sem_numbers, filters.semester) }}
+                        {{ checkbox_filter('year', 'Batch Year', filter_options.years, filters.year) }}
+                        {{ checkbox_filter('batch_no', 'Batch No', batch_numbers, filters.batch_no) }}
+                    </div>
+
+                    <div class="space-y-3">
+                        <h4 class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                            <i class="fas fa-briefcase mr-1"></i> Professional Details
+                        </h4>
+                        
+                        {{ checkbox_filter('department', 'Department', filter_options.departments, filters.department) }}
+                        {{ checkbox_filter('bits_stream', 'BITS Stream', bits_streams, filters.bits_stream) }}
+                        {{ checkbox_filter('function', 'Function', functions, filters.function) }}
+
+                        {% set plant_disabled = (role == 'SDC Coordinator') %}
+                        {% if plant_disabled %}
+                            <div class="filter-group relative">
+                                <label class="block text-[11px] md:text-sm font-semibold text-slate-600 mb-1">Plant Location</label>
+                                {% for loc in filters.plant_location %}
+                                    <input type="hidden" name="plant_location" value="{{ loc }}">
+                                {% endfor %}
+                                <div class="input-field bg-slate-100 text-slate-500 text-[10px] md:text-xs px-2 md:px-3 py-1 rounded-md border border-slate-200 cursor-not-allowed">
+                                    {{ filters.plant_location[0].replace('_', ' ') }}
+                                </div>
+                            </div>
+                        {% else %}
+                            {{ checkbox_filter('plant_location', 'Plant Location', locations, filters.plant_location) }}
+                        {% endif %}
+                    </div>
+
+                    <div class="space-y-3">
+                        <h4 class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2">
+                            <i class="fas fa-user mr-1"></i> Personal Details
+                        </h4>
+                        
+                        {{ checkbox_filter('gender', 'Gender', genders, filters.gender) }}
+                        {{ checkbox_filter('branch', 'Diploma Branch', branches, filters.branch) }}
+                        
+                        <div class="filter-group">
+                            <label class="block text-[11px] md:text-sm font-semibold text-slate-600 mb-1">Ticket No</label>
+                            <input type="text" name="ticket_no" value="{{ filters.ticket_no }}" placeholder="Search Ticket..." class="input-field">
+                        </div>
+                    </div>
+
+                    <div class="pt-3 space-y-2 sticky bottom-0 bg-gradient-to-t from-white via-white to-transparent pb-4 mt-4">
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold text-xs md:text-sm shadow-md transition flex items-center justify-center gap-2">
+                            <i class="fas fa-check-circle"></i> Apply Filters
+                        </button>
+                        <a href="{{ url_for('user_dashboard.dashboard') }}" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-bold text-xs md:text-sm transition text-center block">
+                            Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </aside>
+
+        <main id="mainContent" class="flex-1 overflow-auto flex flex-col bg-slate-50/80">
+            
+            <div class="flex-1 p-3 md:p-6" style="padding: clamp(0.75rem, 2vw, 1.5rem);">
+                
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+                    
+                    <div class="corp-card p-4 flex flex-col">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xs md:text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2">
+                                <i class="fas fa-venus-mars text-indigo-500"></i> Gender Diversity
+                            </h3>
+                        </div>
+                        <div class="flex-1 flex items-center justify-center min-h-[280px]">
+                            <div class="chart-container w-full h-full">
+                                <canvas id="genderChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="corp-card p-0 flex flex-col overflow-hidden border-t-4 border-indigo-500">
+                        <div class="p-3 bg-gradient-to-r from-indigo-50 to-white border-b border-slate-100 flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-base flex-shrink-0 shadow-sm">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="flex items-baseline gap-2 flex-wrap">
+                                <span class="text-[10px] md:text-xs font-bold text-indigo-500 uppercase tracking-wider">Total Students</span>
+                            </div>
+                        </div>
+                        <div class="flex-1 overflow-x-auto">
+                            <table class="min-w-full text-[11px] md:text-sm">
+                                <thead class="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">Plant</th>
+                                        <th class="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">Count</th>
+                                        <th class="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">Diversity</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    {% for loc in location_stats %}
+                                    <tr class="h-11 hover:bg-slate-50/70 transition-colors">
+                                        <td class="px-3 py-2 font-medium text-slate-700">{{ loc.location.replace('_', ' ') }}</td>
+                                        <td class="px-3 py-2 text-center font-semibold text-slate-900 tabular-nums">{{ loc.total }}</td>
+                                        <td class="px-3 py-2 text-center">
+                                            <div class="flex flex-col items-center gap-0.5 justify-center">
+                                                <div class="flex items-center gap-1 text-xs font-semibold tabular-nums">
+                                                    <span class="text-blue-600">{{ loc.male_pct }}%</span>
+                                                    <span class="text-slate-300">/</span>
+                                                    <span class="text-pink-500">{{ loc.female_pct }}%</span>
+                                                </div>
+                                                <div class="w-16 md:w-20 h-1 bg-slate-200/80 rounded-full overflow-hidden flex">
+                                                    <div class="bg-blue-500 h-full" style="width: {{ loc.male_pct }}%"></div>
+                                                    <div class="bg-pink-500 h-full" style="width: {{ loc.female_pct }}%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="3" class="text-center py-8 text-slate-400 italic text-xs">No location data</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="corp-card p-0 flex flex-col overflow-hidden border-t-4 border-red-500">
+                        <div class="p-3 bg-gradient-to-r from-red-50 to-white border-b border-slate-100 flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-base flex-shrink-0 shadow-sm">
+                                <i class="fas fa-user-minus"></i>
+                            </div>
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-[10px] md:text-xs font-bold text-red-500 uppercase tracking-wider">Attrition</span>
+                                <span class="text-xs md:text-sm font-semibold text-slate-500">Plant Wise</span>
+                            </div>
+                        </div>
+                        <div class="flex-1 overflow-x-auto">
+                            <table class="min-w-full text-[11px] md:text-sm">
+                                <thead class="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">Plant</th>
+                                        <th class="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">Attrition %</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    {% for row in attrition_data %}
+                                    <tr class="h-11 hover:bg-slate-50 transition-colors">
+                                        <td class="px-3 py-2 font-medium text-slate-700">{{ row.location.replace('_', ' ') }}</td>
+                                        <td class="px-3 py-2 text-center">
+                                            <div class="flex flex-col items-center gap-0.5 justify-center">
+                                                <span class="font-bold text-red-600 text-sm">{{ row.attrition_pct }}%</span>
+                                                <div class="w-16 md:w-20 h-1 bg-slate-200 rounded-full overflow-hidden">
+                                                    <div class="bg-red-500 h-full" style="width: {{ row.attrition_pct }}%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="2" class="text-center py-8 text-slate-400 italic text-xs">No attrition data</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 md:gap-4 mb-2 md:mb-3">
+                    <div class="corp-card p-0 flex flex-col overflow-hidden border-t-4 border-emerald-500">
+                        <div class="p-2 md:p-4 bg-gradient-to-r from-emerald-50 to-white border-b border-slate-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-[9px] md:text-xs font-bold text-emerald-500 uppercase tracking-wide">Active Batches</p>
+                                    <h2 class="text-xl md:text-3xl font-extrabold text-slate-800 mt-0.5">{{ stats.batches }}</h2>
+                                </div>
+                                <div class="w-8 h-8 md:w-11 md:h-11 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-base md:text-xl">
+                                    <i class="fas fa-layer-group"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 overflow-x-auto">
+                            <table class="min-w-full text-[10px] md:text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-100 border-b border-slate-200">
+                                        <th class="px-2 md:px-3 py-1.5 md:py-2 text-left text-[9px] md:text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap">Batch Year</th>
+                                        {% for loc in batch_stats.locations %}
+                                        <th class="px-2 md:px-3 py-1.5 md:py-2 text-center text-[9px] md:text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap">
+                                            {{ loc.replace('_', ' ') }}
+                                        </th>
+                                        {% endfor %}
+                                        {% if batch_stats.locations|length > 1 %}
+                                        <th class="px-2 md:px-3 py-1.5 md:py-2 text-center text-[9px] md:text-xs font-bold text-emerald-700 uppercase tracking-wide whitespace-nowrap bg-emerald-50">Total</th>
+                                        {% endif %}
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white">
+                                    {% for year in batch_stats.years %}
+                                    <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                        <td class="px-2 md:px-3 py-1.5 md:py-2 font-bold text-slate-800 tabular-nums">
+                                            {{ year }}-{{ ((year + 1)|string)[-2:] }}
+                                        </td>
+                                        {% for loc in batch_stats.locations %}
+                                        <td class="px-2 md:px-3 py-1.5 md:py-2 text-center text-slate-600 tabular-nums">
+                                            {{ batch_stats.data[year].get(loc, 0) }}
+                                        </td>
+                                        {% endfor %}
+                                        {% if batch_stats.locations|length > 1 %}
+                                        <td class="px-2 md:px-3 py-1.5 md:py-2 text-center bg-emerald-50/50 font-bold text-emerald-700 tabular-nums">
+                                            {{ batch_stats.data[year].get('_total', 0) }}
+                                        </td>
+                                        {% endif %}
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="{{ batch_stats.locations|length + (2 if batch_stats.locations|length > 1 else 1) }}" class="text-center py-6 text-slate-400 italic text-[10px]">No batch data</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 md:gap-4 mb-2 md:mb-3">
+                    <div class="corp-card p-0 flex flex-col overflow-hidden border-t-4 border-cyan-500 shadow-md shadow-cyan-100/40">
+                        <div class="p-2 md:p-4 bg-gradient-to-r from-cyan-100 via-cyan-50 to-white border-b border-cyan-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-[9px] md:text-xs font-extrabold text-cyan-700 uppercase tracking-wider">Distribution</p>
+                                    <h2 class="text-base md:text-2xl font-extrabold text-slate-900 mt-0.5 tracking-tight">Diploma Branch Wise</h2>
+                                </div>
+                                <div class="w-8 h-8 md:w-11 md:h-11 rounded-full bg-cyan-200 text-cyan-700 shadow-md shadow-cyan-200/50 flex items-center justify-center text-base md:text-xl">
+                                    <i class="fas fa-sitemap"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 overflow-x-auto">
+                            <table class="min-w-full text-[10px] md:text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-gradient-to-r from-slate-100 to-slate-50 border-b border-slate-200">
+                                        <th class="px-2 md:px-3 py-1.5 md:py-2 text-left text-[9px] md:text-xs font-extrabold text-slate-700 uppercase tracking-wider whitespace-nowrap">Diploma Branch</th>
+                                        {% for loc in branch_stats.locations %}
+                                        <th class="px-2 md:px-3 py-1.5 md:py-2 text-center text-[9px] md:text-xs font-extrabold text-slate-700 uppercase tracking-wider whitespace-nowrap">{{ loc.replace('_', ' ') }}</th>
+                                        {% endfor %}
+                                        {% if branch_stats.locations|length > 1 %}
+                                        <th class="px-2 md:px-3 py-1.5 md:py-2 text-center text-[9px] md:text-xs font-extrabold text-cyan-800 uppercase tracking-wider whitespace-nowrap bg-cyan-100 border-l border-cyan-200">Total</th>
+                                        {% endif %}
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white">
+                                    {% for branch in branch_stats.branches %}
+                                    <tr class="border-b border-slate-100 hover:bg-cyan-50/40 transition-all duration-200">
+                                        <td class="px-2 md:px-3 py-1.5 md:py-2 font-bold text-slate-900 tabular-nums whitespace-nowrap">{{ branch }}</td>
+                                        {% for loc in branch_stats.locations %}
+                                        <td class="px-2 md:px-3 py-1.5 md:py-2 text-center text-slate-700 font-semibold tabular-nums">{{ branch_stats.data[branch].get(loc, 0) }}</td>
+                                        {% endfor %}
+                                        {% if branch_stats.locations|length > 1 %}
+                                        <td class="px-2 md:px-3 py-1.5 md:py-2 text-center bg-cyan-50 font-extrabold text-cyan-800 tabular-nums border-l border-cyan-100">{{ branch_stats.data[branch].get('_total', 0) }}</td>
+                                        {% endif %}
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="{{ branch_stats.locations|length + (2 if branch_stats.locations|length > 1 else 1) }}" class="text-center py-6 text-slate-400 italic text-[10px]">No branch data available</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 md:gap-4 mb-2 md:mb-3">
+                    <div class="corp-card p-0 flex flex-col overflow-hidden border-t-4 border-emerald-500 shadow-md">
+                        
+                        <div class="p-3 md:p-4 bg-gradient-to-r from-emerald-50 to-white border-b border-slate-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-[10px] md:text-xs font-bold text-emerald-500 uppercase tracking-wide">Distribution</p>
+                                    <h2 class="text-base md:text-xl font-extrabold text-slate-900 mt-0.5 tracking-tight">Evaluation Score Distribution</h2>
+                                </div>
+                                <div class="w-9 h-9 md:w-11 md:h-11 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg md:text-xl shadow-sm">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="px-3 md:px-4 py-2 border-b border-slate-100 bg-slate-50/50">
+                            <div class="flex items-center gap-2 md:gap-3 flex-wrap">
+                                
+                                <div class="relative">
+                                    <select id="evalScoreType" onchange="updateEvaluationChart()" class="block w-full rounded-md border border-slate-200 bg-white px-2 md:px-3 py-1 text-[10px] md:text-xs font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
+                                        <option value="all">All Scores</option>
+                                        <option value="bits">BITS Score</option>
+                                        <option value="ojt">OJT Score</option>
+                                        <option value="training">Training Score</option>
+                                    </select>
+                                </div>
+
+                                <div class="relative">
+                                    <button type="button" onclick="toggleDropdown('dropdownEvalBatch')" class="dropdown-btn inline-flex justify-between min-w-[90px] md:min-w-[110px] rounded-md border border-slate-200 bg-white px-2 md:px-3 py-1 text-[10px] md:text-xs font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
+                                        <span>Batch Year</span>
+                                        <i class="fas fa-chevron-down ml-1 mt-0.5 text-[8px]"></i>
+                                    </button>
+                                    <div id="dropdownEvalBatch" class="dropdown-menu hidden absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-30 p-3 max-h-60 overflow-y-auto">
+                                        <div class="flex justify-between mb-2 border-b pb-2">
+                                             <span class="text-[10px] font-bold text-slate-500 uppercase">Select Years</span>
+                                             <button type="button" onclick="clearCheckboxes('eval-batch')" class="text-[10px] text-red-500 font-bold hover:text-red-700">Clear</button>
+                                        </div>
+                                        {% for y in filter_options.years %}
+                                        <label class="flex items-center px-2 py-1.5 hover:bg-slate-50 rounded cursor-pointer text-xs">
+                                            <input type="checkbox" value="{{ y }}" class="eval-filter-checkbox eval-batch-checkbox mr-2 rounded text-emerald-600"> 
+                                            {{ y }}-{{ ((y + 1)|string)[-2:] }}
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <div class="relative">
+                                    <button type="button" onclick="toggleDropdown('dropdownEvalPlant')" class="dropdown-btn inline-flex justify-between min-w-[90px] md:min-w-[110px] rounded-md border border-slate-200 bg-white px-2 md:px-3 py-1 text-[10px] md:text-xs font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
+                                        <span>Plant</span>
+                                        <i class="fas fa-chevron-down ml-1 mt-0.5 text-[8px]"></i>
+                                    </button>
+                                    <div id="dropdownEvalPlant" class="dropdown-menu hidden absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-30 p-3 max-h-60 overflow-y-auto">
+                                        <div class="flex justify-between mb-2 border-b pb-2">
+                                             <span class="text-[10px] font-bold text-slate-500 uppercase">Select Plants</span>
+                                             <button type="button" onclick="clearCheckboxes('eval-plant')" class="text-[10px] text-red-500 font-bold hover:text-red-700">Clear</button>
+                                        </div>
+                                        {% for p in locations %}
+                                        <label class="flex items-center px-2 py-1.5 hover:bg-slate-50 rounded cursor-pointer text-xs">
+                                            <input type="checkbox" value="{{ p }}" class="eval-filter-checkbox eval-plant-checkbox mr-2 rounded text-emerald-600"> 
+                                            {{ p.replace('_', ' ') }}
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <div class="relative">
+                                    <button type="button" onclick="toggleDropdown('dropdownEvalSem')" class="dropdown-btn inline-flex justify-between min-w-[90px] md:min-w-[110px] rounded-md border border-slate-200 bg-white px-2 md:px-3 py-1 text-[10px] md:text-xs font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
+                                        <span>Semester</span>
+                                        <i class="fas fa-chevron-down ml-1 mt-0.5 text-[8px]"></i>
+                                    </button>
+                                    <div id="dropdownEvalSem" class="dropdown-menu hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-30 p-3 max-h-60 overflow-y-auto">
+                                        <div class="flex justify-between mb-2 border-b pb-2">
+                                             <span class="text-[10px] font-bold text-slate-500 uppercase">Select Semesters</span>
+                                             <button type="button" onclick="clearCheckboxes('eval-sem')" class="text-[10px] text-red-500 font-bold hover:text-red-700">Clear</button>
+                                        </div>
+                                        {% for s in sem_numbers %}
+                                        <label class="flex items-center px-2 py-1.5 hover:bg-slate-50 rounded cursor-pointer text-xs">
+                                            <input type="checkbox" value="{{ s }}" class="eval-filter-checkbox eval-sem-checkbox mr-2 rounded text-emerald-600"> 
+                                            Semester {{ s }}
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="chart-container flex-grow" style="height: 60vh; min-height: 250px;">
+                            <canvas id="evaluationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <button id="toggleTableBtn" onclick="toggleStudentTable()" class="w-full bg-white hover:bg-slate-50 text-slate-700 py-2.5 md:py-3 rounded-lg font-bold text-xs md:text-sm shadow-sm border transition flex items-center justify-center gap-2">
+                        <i class="fas fa-chevron-down" id="toggleTableIcon"></i>
+                        <span id="toggleTableText">Show Student Records</span>
+                    </button>
+                </div>
+
+                <div id="studentTableContainer" class="hidden corp-card overflow-hidden">
+                     <div class="overflow-x-auto">
+                         <table class="min-w-full divide-y divide-slate-100">
+                            <thead class="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th class="px-3 md:px-4 py-2.5 text-left text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider">Profile</th>
+                                    <th class="px-3 md:px-4 py-2.5 text-left text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider">Semester</th>
+                                    <th class="px-3 md:px-4 py-2.5 text-left text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Location</th>
+                                    <th class="px-3 md:px-4 py-2.5 text-left text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Department</th>
+                                    <th class="px-3 md:px-4 py-2.5 text-center text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider bg-amber-50">Training(20)</th>
+                                    <th class="px-3 md:px-4 py-2.5 text-center text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider bg-purple-50">BITS CGPA(30)</th>
+                                    <th class="px-3 md:px-4 py-2.5 text-center text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider bg-blue-50">OJT(50)</th>
+                                    <th class="px-3 md:px-4 py-2.5 text-center text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-100">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-slate-100">
+                                {% for student in students %}
+                                <tr class="hover:bg-slate-50 transition-colors group">
+                                    <td class="px-3 md:px-4 py-2.5 whitespace-nowrap">
+                                        <div onclick='openStudentModal({{ student | tojson }})' class="flex items-center cursor-pointer group">
+                                            <div class="flex-shrink-0 h-8 w-8 md:h-9 md:w-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-[11px] md:text-xs shadow-md group-hover:shadow-lg transition-shadow">
+                                                {{ student.employee_name[0]|upper }}
+                                            </div>
+                                            <div class="ml-2 md:ml-3">
+                                                <div class="text-[11px] md:text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">{{ student.employee_name }}</div>
+                                                <div class="text-[10px] md:text-xs text-slate-400 font-medium uppercase hidden sm:block">{{ student.gender }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-3 md:px-4 py-2.5 whitespace-nowrap">
+                                        <div class="text-[11px] md:text-sm font-bold text-slate-800">Sem {{ student.semester or '-' }}</div>
+                                        <div class="text-[10px] md:text-xs text-slate-500 capitalize">{{ student.semester_status or 'N/A' }}</div>
+                                    </td>
+                                    <td class="px-3 md:px-4 py-2.5 whitespace-nowrap text-[11px] md:text-sm text-slate-600 hidden md:table-cell">{{ (student.plant_location or '').replace('_', ' ') }}</td>
+                                    <td class="px-3 md:px-4 py-2.5 whitespace-nowrap text-[11px] md:text-sm text-slate-600 font-medium hidden lg:table-cell">{{ student.department or '-' }}</td>
+                                    
+                                    <td class="px-2 md:px-3 py-2.5 whitespace-nowrap text-center bg-amber-50/50 group-hover:bg-amber-50 transition-colors">
+                                        <span class="text-[11px] md:text-sm font-bold text-amber-700">{{ student.final_eval.training_total | round(1)}}</span>
+                                    </td>
+                                    <td class="px-2 md:px-3 py-2.5 whitespace-nowrap text-center bg-purple-50/50 group-hover:bg-purple-50 transition-colors">
+                                        <span class="text-[11px] md:text-sm font-bold text-purple-700">{{ student.final_eval.bits_total | round(2)  }}</span>
+                                    </td>
+                                    <td class="px-2 md:px-3 py-2.5 whitespace-nowrap text-center bg-blue-50/50 group-hover:bg-blue-50 transition-colors">
+                                        <span class="text-[11px] md:text-sm font-bold text-blue-700">{{ student.final_eval.ojt_total | round(1) }}</span>
+                                    </td>
+                                    <td class="px-2 md:px-3 py-2.5 whitespace-nowrap text-center bg-slate-50 group-hover:bg-slate-100 transition-colors">
+                                        <span class="text-xs md:text-base font-extrabold text-slate-900">{{ student.final_eval.grand_total | round(1) }}</span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-10 text-slate-500">
+                                        <i class="fas fa-filter text-2xl mb-2 text-slate-300"></i>
+                                        <p>No records found matching your filters.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+     <div id="studentModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-60 transition-opacity" onclick="closeStudentModal()"></div>
+        
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                
+                <div class="relative bg-white rounded-xl text-left shadow-2xl transform transition-all w-full sm:my-8 sm:max-w-3xl border border-slate-200 flex flex-col max-h-[calc(100vh-2rem)]">
+                    
+                    <div class="flex-shrink-0 bg-slate-800 px-4 md:px-6 py-3 md:py-4 flex justify-between items-center rounded-t-xl border-b border-slate-700">
+                        <div class="flex items-center gap-3">
+                            <div id="modalAvatar" class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white text-slate-800 flex items-center justify-center font-bold text-base md:text-lg shadow-lg border-4 border-white/20"></div>
+                            <div class="text-white text-left">
+                                <h3 class="text-base md:text-xl font-bold leading-none" id="modal-title"></h3>
+                                <p id="modalSub" class="text-slate-300 text-[11px] md:text-sm mt-1 font-medium flex items-center gap-2"></p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closeStudentModal()" class="text-slate-300 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition focus:outline-none">
+                            <i class="fas fa-times text-base"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-5 bg-slate-50">
+                        
+                        <div class="mb-4 md:mb-5 p-3 md:p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                <div class="flex items-center gap-2 md:gap-3">
+                                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                                        <i class="fas fa-graduation-cap text-indigo-600 text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wider">Viewing Context</p>
+                                        <h4 id="mSemHeader" class="text-sm md:text-lg font-bold text-slate-800">Semester -</h4>
+                                    </div>
+                                </div>
+                                <div id="mStatusBadge" class="flex items-center gap-2"></div>
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-slate-100 text-[11px] md:text-sm text-slate-500 flex items-center gap-2">
+                                <i class="fas fa-info-circle text-indigo-400"></i>
+                                <span>Current Active Status: <span id="mActiveStatus" class="font-bold text-slate-800">-</span></span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 md:gap-y-6 gap-x-4 md:gap-x-8">
+                            
+                            <div class="space-y-4 md:col-span-1 lg:col-span-3 border-b border-slate-200 pb-4 mb-2">
+                                <h4 class="text-[11px] md:text-sm font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                    <i class="fas fa-user-circle text-slate-400"></i> Personal Information
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Ticket No</label>
+                                        <div id="mTicket" class="text-xs md:text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Email</label>
+                                        <div id="mEmail" class="text-xs md:text-sm font-semibold text-slate-800 break-all"></div>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Mobile</label>
+                                        <div id="mMobile" class="text-xs md:text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Gender</label>
+                                        <div id="mGender" class="text-xs md:text-sm font-semibold text-slate-800 capitalize"></div>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">BC No</label>
+                                        <div id="mBC" class="text-xs md:text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Diploma Branch</label>
+                                        <div id="mDiploma" class="text-xs md:text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                             <div class="space-y-4 md:col-span-1 lg:col-span-3 border-b border-slate-200 pb-4 mb-2">
+                                <h4 class="text-[11px] md:text-sm font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                    <i class="fas fa-briefcase text-slate-400"></i> Professional Details
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Plant Location</label>
+                                        <div id="mLocation" class="text-xs md:text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Department</label>
+                                        <div id="mDept" class="text-xs md:text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Function</label>
+                                        <div id="mFunction" class="text-xs md:text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Reporting Manager</label>
+                                        <div id="mManager" class="text-xs md:text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">BITS Stream</label>
+                                        <div id="mStream" class="text-xs md:text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Batch Year</label>
+                                        <div id="mYear" class="text-xs md:text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Batch No</label>
+                                        <div id="mBatch" class="text-xs md:text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                    <div class="bg-white p-2.5 rounded-lg shadow-xs border border-slate-100">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Date of Joining</label>
+                                        <div id="mDOJ" class="text-xs md:text-sm font-semibold text-slate-800"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/user_dashboard.js') }}"></script>
+    
+    <script>
+        window.dashboardConfig = {
+            maleCount: {{ stats.male or 0 }},
+            femaleCount: {{ stats.female or 0 }}
+        };
+
+        function toggleDropdown(id) {
+            document.querySelectorAll('.checkbox-dropdown-menu, .dropdown-menu').forEach(dd => {
+                if(dd.id !== id) dd.classList.add('hidden');
+            });
+            const menu = document.getElementById(id);
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        function selectAll(name) {
+            const checkboxes = document.querySelectorAll(`input[name="${name}"]`);
+            checkboxes.forEach(cb => cb.checked = true);
+            updateDropdownLabel(name);
+        }
+
+        function clearSelection(name) {
+            const checkboxes = document.querySelectorAll(`input[name="${name}"]`);
+            checkboxes.forEach(cb => cb.checked = false);
+            updateDropdownLabel(name);
+        }
+
+        function updateDropdownLabel(name) {
+            const checkboxes = document.querySelectorAll(`input[name="${name}"]:checked`);
+            const btnLabel = document.getElementById(`btn_label_${name}`);
+            if (btnLabel) {
+                btnLabel.textContent = checkboxes.length > 0 ? `${checkboxes.length} Selected` : 'All';
+            }
+        }
+        
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.filter-group') && !e.target.closest('.dropdown-btn')) {
+                document.querySelectorAll('.checkbox-dropdown-menu').forEach(dd => dd.classList.add('hidden'));
+            }
+        });
+    </script>
+    
+</body>
+</html>
