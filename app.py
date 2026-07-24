@@ -115,6 +115,12 @@ def _register_admin_bootstrap(app):
     if not app.config.get("AUTO_CREATE_ADMIN"):
         return
 
+    if len(app.config["ADMIN_PASSWORD"]) < 8:
+        app.logger.warning(
+            "LAKSHYA_BOOTSTRAP_ADMIN_PASSWORD contains fewer than 8 characters. "
+            "Change it and run 'flask --app app reset-admin-password'."
+        )
+
     bootstrap_lock = Lock()
     bootstrap_state = {"checked": False}
 
@@ -136,6 +142,13 @@ def _register_admin_bootstrap(app):
             if created:
                 app.logger.info(
                     "Created configured development Admin account '%s'.",
+                    app.config["ADMIN_USERNAME"],
+                )
+            else:
+                app.logger.info(
+                    "Configured Admin account '%s' already exists; its password "
+                    "was not changed. Use 'flask --app app reset-admin-password' "
+                    "to set a new password.",
                     app.config["ADMIN_USERNAME"],
                 )
             bootstrap_state["checked"] = True

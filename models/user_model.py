@@ -161,7 +161,12 @@ def ensure_admin_user(username, password):
             "SELECT id, role FROM users WHERE username = %s",
             (normalized_username,),
         )
-        if cursor.fetchone():
+        existing_account = cursor.fetchone()
+        if existing_account:
+            if existing_account["role"] != "Admin":
+                raise ValueError(
+                    f"Account '{normalized_username}' already exists but is not an Admin."
+                )
             return False
 
         cursor = conn.cursor()
@@ -175,6 +180,44 @@ def ensure_admin_user(username, password):
         )
         conn.commit()
         return cursor.rowcount == 1
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def reset_admin_password(username, password):
+    """Replace the password hash for an existing Admin account."""
+    normalized_username = (username or "").strip()
+    if not normalized_username:
+        raise ValueError("Admin username is required.")
+    if len(password or "") < 8:
+        raise ValueError("Admin password must contain at least 8 characters.")
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            "SELECT id, role FROM users WHERE username = %s",
+            (normalized_username,),
+        )
+        account = cursor.fetchone()
+        if not account:
+            raise NotFoundError("Admin account was not found.")
+        if account["role"] != "Admin":
+            raise ValueError(
+                f"Account '{normalized_username}' exists but is not an Admin."
+            )
+
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET password = %s WHERE id = %s AND role = 'Admin'",
+            (generate_password_hash(password), account["id"]),
+        )
+        if cursor.rowcount != 1:
+            raise RuntimeError("Admin password was not updated.")
+        conn.commit()
     except Exception:
         conn.rollback()
         raise

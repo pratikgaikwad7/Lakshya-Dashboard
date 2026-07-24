@@ -84,7 +84,17 @@ The `models/evaluation_model.py` and `models/student_model.py` files intentional
 
 6. Create the first database-backed administrator. For local development,
    setting `AUTO_CREATE_ADMIN=true` creates it automatically on the first
-   request after startup:
+   request after startup. Use these exact variable names in `.env`:
+
+   ```dotenv
+   AUTO_CREATE_ADMIN=true
+   LAKSHYA_BOOTSTRAP_ADMIN_USERNAME=admin
+   LAKSHYA_BOOTSTRAP_ADMIN_PASSWORD=replace-with-a-strong-password
+   ```
+
+   `ADMIN_USERNAME` and `ADMIN_PASSWORD` are not used.
+
+   You can also create the account explicitly:
 
    ```bash
    flask --app app create-admin
@@ -96,6 +106,17 @@ The `models/evaluation_model.py` and `models/student_model.py` files intentional
    overwrites an existing account. Login
    always checks the hashed database password. Automatic creation is forcibly
    disabled by the production configuration.
+
+   If that username already exists, changing `.env` intentionally does not
+   replace its database password. Reset it interactively instead:
+
+   ```bash
+   flask --app app reset-admin-password
+   ```
+
+   Restart the application after changing `.env`. Also verify that `DB_HOST`,
+   `DB_NAME`, and the database user point to the database whose `users` table
+   contains the expected account.
 
 7. Run the application:
 

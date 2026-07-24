@@ -6,7 +6,12 @@ from config import TestingConfig
 from exceptions import ForbiddenError
 from models.evaluations.lifecycle import bulk_upsert_evaluations, promote_student_semester
 from models.student_model import add_student
-from models.user_model import User, ensure_admin_user, update_user_credentials
+from models.user_model import (
+    User,
+    ensure_admin_user,
+    reset_admin_password,
+    update_user_credentials,
+)
 from services.student_service import update_existing_student
 
 
@@ -160,7 +165,6 @@ class AccessControlTests(unittest.TestCase):
             self.assertEqual(client.get('/login').status_code, 200)
         ensure_admin.assert_called_once_with('admin', 'strong-test-password')
 
-
 class CSRFTests(unittest.TestCase):
     def test_mutating_request_without_csrf_token_is_rejected(self):
         app = create_app(CSRFTestingConfig)
@@ -262,6 +266,27 @@ class DataIntegrityTests(unittest.TestCase):
         self.assertFalse(created)
         self.assertFalse(any(query.startswith('INSERT INTO users') for query in cursor.queries))
         self.assertEqual(connection.commits, 0)
+
+    def test_bootstrap_rejects_existing_non_admin_username(self):
+        cursor = FakeCursor(fetch_results=[{'id': 1, 'role': 'PMO'}])
+        connection = FakeConnection(cursor)
+        with patch('models.user_model.get_db_connection', return_value=connection):
+            with self.assertRaisesRegex(ValueError, "is not an Admin"):
+                ensure_admin_user('existing-user', 'new-password')
+        self.assertEqual(connection.rollbacks, 1)
+        self.assertEqual(connection.commits, 0)
+
+    def test_existing_admin_password_can_be_reset_explicitly(self):
+        cursor = FakeCursor(fetch_results=[{'id': 1, 'role': 'Admin'}])
+        connection = FakeConnection(cursor)
+        with patch('models.user_model.get_db_connection', return_value=connection):
+            reset_admin_password('admin', 'new-strong-password')
+        password_hash, user_id = cursor.params[1]
+        self.assertEqual(user_id, 1)
+        self.assertNotEqual(password_hash, 'new-strong-password')
+        from werkzeug.security import check_password_hash
+        self.assertTrue(check_password_hash(password_hash, 'new-strong-password'))
+        self.assertEqual(connection.commits, 1)
 
     def test_student_and_initial_semester_rollback_together(self):
         cursor = FakeCursor(fail_on_evaluation_insert=True)
