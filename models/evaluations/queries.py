@@ -139,3 +139,42 @@ def get_student_all_evaluations_list(student_id):
     conn.close()
     return results
 
+
+def get_student_evaluation_history(student_id):
+    """Return every semester record needed by the full student progress profile."""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            """
+            SELECT
+                id,
+                student_id,
+                semester,
+                semester_status,
+                score_attendance,
+                score_suggestions,
+                score_projects,
+                score_recognitions,
+                score_safety,
+                score_discipline,
+                score_bits_attendance,
+                score_equipment,
+                score_shop_task,
+                score_function_output,
+                training_marks,
+                bits_cgpa,
+                calc_training_total,
+                calc_ojt_total,
+                calc_bits_total,
+                calc_grand_total,
+                updated_at
+            FROM student_evaluations
+            WHERE student_id = %s
+            ORDER BY semester ASC
+            """,
+            (student_id,),
+        )
+        return cursor.fetchall()
+    finally:
+        conn.close()

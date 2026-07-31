@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/enterprise-dialog.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/users.css') }}">
 </head>
 
@@ -170,7 +171,18 @@
                                             <i class="fas fa-pen"></i><span>Edit</span>
                                         </button>
                                         {% if user.id != current_user_id %}
-                                            <form method="POST" action="/users/delete/{{ user.id }}" class="users-delete-form" data-username="{{ user.username }}">
+                                            <form
+                                                method="POST"
+                                                action="/users/delete/{{ user.id }}"
+                                                class="users-delete-form"
+                                                data-username="{{ user.username }}"
+                                                data-enterprise-confirm
+                                                data-confirm-title="Delete {{ user.username }}?"
+                                                data-confirm-message="This account will be permanently removed and cannot be restored."
+                                                data-confirm-label="Delete Account"
+                                                data-confirm-tone="danger"
+                                                data-confirm-icon="fa-trash-alt"
+                                            >
                                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="users-delete-button" aria-label="Delete {{ user.username }}">
                                                     <i class="fas fa-trash-alt"></i>
@@ -239,6 +251,7 @@
         </div>
     </div>
 
+    <script src="{{ url_for('static', filename='js/components/enterprise-dialog.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pages/users.js') }}"></script>
 </body>
 </html>

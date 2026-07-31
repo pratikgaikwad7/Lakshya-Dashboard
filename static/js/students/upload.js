@@ -31,11 +31,21 @@ async function uploadExcelFile(file) {
                 loadStudents();
             }
         } else {
-            alert('Error uploading file: ' + (result.error || 'Unknown error'));
+            await window.LakshyaDialog.alert({
+                title: 'Upload failed',
+                message: result.error || 'An unknown upload error occurred.',
+                tone: 'danger',
+                icon: 'fa-file-circle-exclamation'
+            });
         }
     } catch (err) {
         console.error(err);
-        alert('Failed to connect to server.');
+        await window.LakshyaDialog.alert({
+            title: 'Upload failed',
+            message: 'The server could not be reached. Please try again.',
+            tone: 'danger',
+            icon: 'fa-plug-circle-xmark'
+        });
     } finally {
         uploadBtn.innerHTML = originalText;
         uploadBtn.disabled = false;

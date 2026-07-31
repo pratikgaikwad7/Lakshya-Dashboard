@@ -1,5 +1,500 @@
-        .checkbox-dropdown-menu { max-height: 250px; overflow-y: auto; }
-        .checkbox-dropdown-menu::-webkit-scrollbar { width: 6px; }
-        .checkbox-dropdown-menu::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
-    
+:root {
+    --user-dashboard-navy: #06152f;
+    --user-dashboard-navy-soft: #0b2348;
+    --user-dashboard-blue: #1457d9;
+    --user-dashboard-blue-bright: #2474f0;
+    --user-dashboard-cyan: #00a6ce;
+    --user-dashboard-ink: #0f172a;
+    --user-dashboard-muted: #64748b;
+    --user-dashboard-line: #dce5f1;
+    --user-dashboard-canvas: #edf3fa;
+    --user-dashboard-glass: rgba(255, 255, 255, .92);
+    --user-dashboard-shadow: 0 24px 55px -42px rgba(15, 23, 42, .82);
+}
 
+body {
+    color: var(--user-dashboard-ink);
+    background:
+        radial-gradient(circle at 88% 2%, rgba(36, 116, 240, .11), transparent 25rem),
+        radial-gradient(circle at 6% 88%, rgba(0, 166, 206, .08), transparent 28rem),
+        var(--user-dashboard-canvas);
+}
+
+/* Compact dark aurora navigation, retaining the existing header content. */
+.navbar-header {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    color: #fff;
+    border-bottom-color: rgba(125, 211, 252, .22);
+    background:
+        linear-gradient(112deg, rgba(6, 21, 47, .99), rgba(11, 35, 72, .98)),
+        var(--user-dashboard-navy);
+    box-shadow: 0 18px 38px -30px rgba(2, 8, 23, .95);
+}
+
+.navbar-header::before {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    opacity: .15;
+    content: "";
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(148, 163, 184, .15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, .15) 1px, transparent 1px);
+    background-size: 38px 38px;
+    mask-image: linear-gradient(90deg, #000, transparent 90%);
+}
+
+.navbar-header::after {
+    position: absolute;
+    top: -185px;
+    right: 4%;
+    z-index: -1;
+    width: 430px;
+    height: 430px;
+    border-radius: 999px;
+    content: "";
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(36, 116, 240, .5), transparent 66%);
+    animation: dashboardAuroraDrift 9s ease-in-out infinite alternate;
+}
+
+.navbar-header h1 {
+    color: #fff !important;
+}
+
+.navbar-header > div > div:first-child > div:first-child {
+    border: 1px solid rgba(255, 255, 255, .22);
+    background: linear-gradient(145deg, var(--user-dashboard-blue), var(--user-dashboard-cyan)) !important;
+    box-shadow: 0 14px 28px -18px rgba(0, 166, 206, .9);
+}
+
+.navbar-header > div > div:last-child > div {
+    color: #dbeafe !important;
+    border-color: rgba(148, 163, 184, .2) !important;
+    background: rgba(255, 255, 255, .07) !important;
+    box-shadow: none !important;
+    backdrop-filter: blur(12px);
+}
+
+.navbar-header > div > div:last-child > div i,
+.navbar-header > div > div:last-child > div span:last-child {
+    color: #67e8f9 !important;
+}
+
+.navbar-header form button {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    padding: 0 !important;
+    border: 1px solid rgba(148, 163, 184, .18);
+    border-radius: 9px;
+    color: #cbd5e1 !important;
+    background: rgba(255, 255, 255, .05);
+}
+
+.navbar-header form button:hover {
+    color: #fda4af !important;
+    border-color: rgba(251, 113, 133, .32);
+    background: rgba(190, 24, 93, .1);
+}
+
+/* Existing filter strip becomes a subtle glass command bar. */
+.sticky-top-strip {
+    border-bottom-color: rgba(203, 213, 225, .78);
+    background: rgba(255, 255, 255, .82) !important;
+    box-shadow: 0 12px 30px -29px rgba(15, 23, 42, .72);
+    backdrop-filter: blur(16px);
+}
+
+.dashboard-filter-trigger {
+    min-height: 34px;
+    border: 1px solid rgba(36, 116, 240, .24);
+    border-radius: 9px !important;
+    background: linear-gradient(135deg, var(--user-dashboard-blue), var(--user-dashboard-cyan)) !important;
+    box-shadow: 0 12px 22px -16px rgba(20, 87, 217, .9);
+}
+
+.dashboard-filter-trigger:hover {
+    background: linear-gradient(135deg, #0f46b7, #0891b2) !important;
+}
+
+.active-filter-tag {
+    color: #1e40af;
+    border-color: #bfdbfe;
+    border-radius: 999px;
+    background: rgba(239, 246, 255, .92);
+    box-shadow: 0 8px 18px -16px rgba(20, 87, 217, .75);
+}
+
+/* Preserve layout while adding ambient depth to the scrolling canvas. */
+#mainContent {
+    background:
+        radial-gradient(circle at 92% 8%, rgba(36, 116, 240, .1), transparent 24rem),
+        radial-gradient(circle at 6% 70%, rgba(0, 166, 206, .07), transparent 28rem),
+        linear-gradient(180deg, rgba(248, 251, 255, .72), rgba(237, 243, 250, .84)) !important;
+}
+
+#mainContent > div {
+    position: relative;
+}
+
+/* Soft elevated glass cards with the existing accent colours retained. */
+.corp-card {
+    border-color: rgba(203, 213, 225, .82) !important;
+    border-radius: 14px !important;
+    background: var(--user-dashboard-glass) !important;
+    box-shadow: var(--user-dashboard-shadow), 0 1px 2px rgba(15, 23, 42, .04) !important;
+    backdrop-filter: blur(15px);
+}
+
+.corp-card:hover {
+    border-color: rgba(125, 211, 252, .52) !important;
+    box-shadow: 0 28px 58px -42px rgba(20, 87, 217, .42), 0 8px 18px -16px rgba(15, 23, 42, .24) !important;
+    transform: translateY(-2px);
+}
+
+.corp-card[class*="border-t-4"] {
+    border-top-width: 2px !important;
+}
+
+.corp-card > [class~="bg-gradient-to-r"] {
+    background:
+        radial-gradient(circle at 92% 0, rgba(36, 116, 240, .08), transparent 12rem),
+        linear-gradient(90deg, rgba(239, 246, 255, .9), rgba(255, 255, 255, .72)) !important;
+}
+
+.dashboard-top-card {
+    min-width: 0;
+}
+
+.dashboard-top-card:first-child {
+    background:
+        radial-gradient(circle at 50% 55%, rgba(36, 116, 240, .065), transparent 13rem),
+        var(--user-dashboard-glass) !important;
+}
+
+/* Minimalist table treatment across all existing dashboard tables. */
+.corp-card table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.corp-card table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.corp-card table th {
+    color: #64748b !important;
+    border-bottom: 1px solid var(--user-dashboard-line) !important;
+    background: rgba(248, 250, 252, .95) !important;
+    font-weight: 800 !important;
+    letter-spacing: .075em !important;
+    backdrop-filter: blur(10px);
+}
+
+.corp-card table td {
+    border-bottom-color: #edf2f7 !important;
+}
+
+.corp-card table tbody {
+    background: rgba(255, 255, 255, .66) !important;
+}
+
+.corp-card table tbody tr {
+    background: transparent;
+}
+
+.corp-card table tbody tr:hover {
+    background: rgba(239, 246, 255, .68) !important;
+}
+
+.corp-card table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+/* Restore restrained data-card colour cues without losing the SaaS grid. */
+.dashboard-kpi-card {
+    position: relative;
+    isolation: isolate;
+}
+
+.dashboard-kpi-card--students {
+    background:
+        radial-gradient(circle at 94% 3%, rgba(99, 102, 241, .13), transparent 15rem),
+        linear-gradient(145deg, rgba(255, 255, 255, .97), rgba(238, 242, 255, .72)) !important;
+}
+
+.dashboard-kpi-card--students > [class~="bg-gradient-to-r"] {
+    background:
+        linear-gradient(105deg, rgba(238, 242, 255, .98), rgba(239, 246, 255, .82), rgba(255, 255, 255, .88)) !important;
+}
+
+.dashboard-kpi-card--students table th {
+    background: rgba(238, 242, 255, .84) !important;
+}
+
+.dashboard-kpi-card--students table tbody {
+    background: linear-gradient(110deg, rgba(255, 255, 255, .82), rgba(238, 242, 255, .38)) !important;
+}
+
+.dashboard-kpi-card--students table tbody tr:hover {
+    background: rgba(224, 231, 255, .62) !important;
+}
+
+.dashboard-kpi-card--attrition {
+    background:
+        radial-gradient(circle at 94% 3%, rgba(244, 63, 94, .11), transparent 15rem),
+        linear-gradient(145deg, rgba(255, 255, 255, .97), rgba(255, 241, 242, .7)) !important;
+}
+
+.dashboard-kpi-card--attrition > [class~="bg-gradient-to-r"] {
+    background:
+        linear-gradient(105deg, rgba(255, 241, 242, .98), rgba(255, 247, 237, .78), rgba(255, 255, 255, .88)) !important;
+}
+
+.dashboard-kpi-card--attrition table th {
+    background: rgba(255, 241, 242, .82) !important;
+}
+
+.dashboard-kpi-card--attrition table tbody {
+    background: linear-gradient(110deg, rgba(255, 255, 255, .84), rgba(255, 241, 242, .38)) !important;
+}
+
+.dashboard-kpi-card--attrition table tbody tr:hover {
+    background: rgba(255, 228, 230, .6) !important;
+}
+
+.dashboard-kpi-card--batches {
+    background:
+        radial-gradient(circle at 94% 3%, rgba(16, 185, 129, .11), transparent 17rem),
+        linear-gradient(145deg, rgba(255, 255, 255, .97), rgba(236, 253, 245, .68)) !important;
+}
+
+.dashboard-kpi-card--batches > [class~="bg-gradient-to-r"] {
+    background:
+        linear-gradient(105deg, rgba(236, 253, 245, .98), rgba(240, 253, 250, .8), rgba(255, 255, 255, .88)) !important;
+}
+
+.dashboard-kpi-card--batches table th {
+    background: rgba(236, 253, 245, .84) !important;
+}
+
+.dashboard-kpi-card--batches table tbody {
+    background: linear-gradient(110deg, rgba(255, 255, 255, .84), rgba(236, 253, 245, .4)) !important;
+}
+
+.dashboard-kpi-card--batches table tbody tr:hover {
+    background: rgba(209, 250, 229, .58) !important;
+}
+
+.dashboard-kpi-card--branches {
+    background:
+        radial-gradient(circle at 94% 3%, rgba(6, 182, 212, .12), transparent 17rem),
+        linear-gradient(145deg, rgba(255, 255, 255, .97), rgba(236, 254, 255, .72)) !important;
+}
+
+.dashboard-kpi-card--branches > [class~="bg-gradient-to-r"] {
+    background:
+        linear-gradient(105deg, rgba(236, 254, 255, .98), rgba(239, 246, 255, .82), rgba(255, 255, 255, .88)) !important;
+}
+
+.dashboard-kpi-card--branches table th {
+    background: rgba(236, 254, 255, .86) !important;
+}
+
+.dashboard-kpi-card--branches table tbody {
+    background: linear-gradient(110deg, rgba(255, 255, 255, .84), rgba(207, 250, 254, .36)) !important;
+}
+
+.dashboard-kpi-card--branches table tbody tr:hover {
+    background: rgba(207, 250, 254, .58) !important;
+}
+
+/* Student records grid receives the same compact data-grid language. */
+#studentTableContainer {
+    position: relative;
+}
+
+#studentTableContainer::before {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 3;
+    height: 2px;
+    content: "";
+    background: linear-gradient(90deg, var(--user-dashboard-blue), var(--user-dashboard-cyan), transparent 78%);
+}
+
+#studentTableContainer table th {
+    height: 40px;
+    padding-block: 8px !important;
+    font-size: 9px !important;
+}
+
+#studentTableContainer table td {
+    height: 56px;
+    padding-block: 7px !important;
+    font-size: 11px !important;
+}
+
+#studentTableContainer table tbody td:first-child > a > div:first-child {
+    border: 1px solid rgba(125, 211, 252, .36);
+    border-radius: 10px;
+    background: linear-gradient(145deg, var(--user-dashboard-blue), var(--user-dashboard-cyan)) !important;
+    box-shadow: 0 13px 22px -16px rgba(20, 87, 217, .9);
+}
+
+#toggleTableBtn {
+    min-height: 39px;
+    color: #334155 !important;
+    border-color: rgba(203, 213, 225, .86) !important;
+    border-radius: 11px !important;
+    background: rgba(255, 255, 255, .9) !important;
+    box-shadow: 0 18px 38px -32px rgba(15, 23, 42, .7) !important;
+    backdrop-filter: blur(13px);
+}
+
+#toggleTableBtn:hover {
+    color: var(--user-dashboard-blue) !important;
+    border-color: #bfdbfe !important;
+    background: #fff !important;
+}
+
+/* Chart panels and controls. */
+.dashboard-chart-shell {
+    border-radius: 11px;
+    background:
+        linear-gradient(rgba(255, 255, 255, .72), rgba(248, 250, 252, .6));
+}
+
+.corp-card select,
+.corp-card .dropdown-btn {
+    min-height: 31px;
+    color: #334155 !important;
+    border-color: #dbe4f0 !important;
+    border-radius: 8px !important;
+    background-color: rgba(255, 255, 255, .9) !important;
+}
+
+.corp-card select:focus,
+.corp-card .dropdown-btn:focus {
+    border-color: var(--user-dashboard-blue-bright) !important;
+    box-shadow: 0 0 0 3px rgba(36, 116, 240, .1);
+    outline: none;
+}
+
+.dropdown-menu,
+.checkbox-dropdown-menu {
+    border-color: rgba(191, 219, 254, .9) !important;
+    border-radius: 11px !important;
+    background: rgba(255, 255, 255, .96) !important;
+    box-shadow: 0 22px 48px -28px rgba(15, 23, 42, .62) !important;
+    backdrop-filter: blur(15px);
+}
+
+/* Filter drawer follows the same corporate blue/cyan system. */
+.filter-sidebar {
+    background:
+        radial-gradient(circle at 12% 0, rgba(36, 116, 240, .1), transparent 14rem),
+        linear-gradient(180deg, #fff, #f8fbff) !important;
+}
+
+.filter-sidebar::before {
+    background: linear-gradient(90deg, var(--user-dashboard-blue), var(--user-dashboard-cyan)) !important;
+}
+
+.filter-sidebar.open {
+    border-right-color: rgba(125, 211, 252, .24);
+    box-shadow: 24px 0 50px -34px rgba(2, 8, 23, .85);
+}
+
+.filter-header-icon {
+    color: var(--user-dashboard-blue);
+    border-color: #dbeafe;
+    background: linear-gradient(145deg, #eff6ff, #ecfeff);
+}
+
+.filter-section:hover {
+    border-color: rgba(125, 211, 252, .58);
+    box-shadow: 0 16px 32px -27px rgba(20, 87, 217, .42);
+}
+
+.filter-section h4.text-slate-400 i {
+    color: var(--user-dashboard-blue);
+}
+
+.filter-select-button[aria-expanded="true"],
+.filter-group .input-field:focus {
+    border-color: var(--user-dashboard-blue-bright);
+    box-shadow: 0 0 0 3px rgba(36, 116, 240, .1);
+}
+
+.filter-apply-button {
+    background: linear-gradient(135deg, var(--user-dashboard-blue), var(--user-dashboard-cyan)) !important;
+    box-shadow: 0 12px 20px -14px rgba(20, 87, 217, .9);
+}
+
+.sidebar-backdrop.visible {
+    background: rgba(2, 8, 23, .44);
+    backdrop-filter: blur(4px);
+}
+
+/* Existing modal styling is preserved structurally and softened visually. */
+#studentModal {
+    background: rgba(2, 8, 23, .64) !important;
+    backdrop-filter: blur(7px);
+}
+
+#studentModal > div {
+    border-color: rgba(125, 211, 252, .2) !important;
+    border-radius: 17px !important;
+    box-shadow: 0 35px 80px -38px rgba(2, 8, 23, .92) !important;
+}
+
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #cbd5e1;
+}
+
+@keyframes dashboardAuroraDrift {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(-8%, 4%, 0); }
+}
+
+@media (max-width: 768px) {
+    .navbar-header::after {
+        right: -180px;
+    }
+
+    .corp-card {
+        border-radius: 12px !important;
+    }
+
+    #mainContent > div {
+        padding: 10px !important;
+    }
+
+    .sticky-top-strip {
+        padding-inline: 10px !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .navbar-header::after {
+        animation: none !important;
+    }
+}

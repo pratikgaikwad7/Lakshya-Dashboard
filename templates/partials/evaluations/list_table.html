@@ -1,11 +1,11 @@
         <!-- Main Content Area -->
-        <main class="flex-1 overflow-auto p-6 bg-slate-100">
-            <div class="max-w-full mx-auto">
+        <main class="evaluation-list-main flex-1 overflow-auto">
+            <div class="evaluation-list-content max-w-full mx-auto">
                 <!-- Table Container -->
-                <div class="bg-white shadow-sm rounded-xl overflow-hidden border border-slate-200">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-slate-100">
-                            <thead class="bg-slate-50 border-b border-slate-200">
+                <div class="evaluation-data-card overflow-hidden">
+                    <div class="evaluation-data-scroll overflow-x-auto">
+                        <table class="evaluation-data-grid min-w-full">
+                            <thead>
                                 <tr>
                                     <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student Profile</th>
                                     <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Semester</th>
@@ -20,19 +20,19 @@
                                     <th class="px-4 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Action</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-slate-100">
+                            <tbody>
                                 {% for student in students %}
-                                <tr class="hover:bg-slate-50 transition-colors group">
+                                <tr class="evaluation-data-row transition-colors group">
                                     <td class="px-4 py-3 whitespace-nowrap">
-                                        <div onclick='openStudentModal({{ student | tojson }})' class="flex items-center cursor-pointer group">
-                                            <div class="flex-shrink-0 h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-md group-hover:shadow-lg transition-shadow">
+                                        <a href="{{ url_for('evaluations.student_progress_profile', student_id=student.id) }}" class="flex items-center cursor-pointer group">
+                                            <div class="evaluation-student-avatar flex-shrink-0 flex items-center justify-center text-white font-bold text-xs transition-shadow">
                                                 {{ student.employee_name[0]|upper }}
                                             </div>
-                                            <div class="ml-3">
-                                                <div class="text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">{{ student.employee_name }}</div>
-                                                <div class="text-[10px] text-slate-400 font-medium uppercase">{{ student.gender }}</div>
+                                            <div class="evaluation-student-copy">
+                                                <div class="evaluation-student-name font-semibold transition-colors">{{ student.employee_name }}</div>
+                                                <div class="evaluation-student-meta font-medium uppercase">{{ student.gender }}</div>
                                             </div>
-                                        </div>
+                                        </a>
                                     </td>
                                     
                                     <td class="px-4 py-3 whitespace-nowrap">
@@ -100,7 +100,7 @@
                                             </button>
                                         {% else %}
                                             <a href="/evaluations/{{ student.id }}{% if student.semester %}?semester={{ student.semester }}{% endif %}" 
-                                               class="inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-md text-xs font-bold shadow-sm transition">
+                                               class="evaluation-row-action inline-flex items-center text-white text-xs font-bold transition">
                                                 <i class="fas fa-edit mr-1.5"></i> Evaluate
                                             </a>
                                         {% endif %}
@@ -120,4 +120,3 @@
                 </div>
             </div>
         </main>
-

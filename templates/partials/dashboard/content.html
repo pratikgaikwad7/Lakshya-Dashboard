@@ -18,7 +18,7 @@
                         </div>
                     </div>
 
-                    <div class="corp-card dashboard-animate-section dashboard-top-card p-0 flex flex-col overflow-hidden border-t-4 border-indigo-500">
+                    <div class="corp-card dashboard-kpi-card dashboard-kpi-card--students dashboard-animate-section dashboard-top-card p-0 flex flex-col overflow-hidden border-t-4 border-indigo-500">
                         <div class="p-3 bg-gradient-to-r from-indigo-50 to-white border-b border-slate-100 flex items-center gap-3">
                             <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-base flex-shrink-0 shadow-sm">
                                 <i class="fas fa-users"></i>
@@ -63,7 +63,7 @@
                         </div>
                     </div>
 
-                    <div class="corp-card dashboard-animate-section dashboard-top-card p-0 flex flex-col overflow-hidden border-t-4 border-red-500">
+                    <div class="corp-card dashboard-kpi-card dashboard-kpi-card--attrition dashboard-animate-section dashboard-top-card p-0 flex flex-col overflow-hidden border-t-4 border-red-500">
                         <div class="p-3 bg-gradient-to-r from-red-50 to-white border-b border-slate-100 flex items-center gap-3">
                             <div class="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-base flex-shrink-0 shadow-sm">
                                 <i class="fas fa-user-minus"></i>
@@ -104,7 +104,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-3 md:gap-4 mb-2 md:mb-3">
-                    <div class="corp-card dashboard-animate-section p-0 flex flex-col overflow-hidden border-t-4 border-emerald-500">
+                    <div class="corp-card dashboard-kpi-card dashboard-kpi-card--batches dashboard-animate-section p-0 flex flex-col overflow-hidden border-t-4 border-emerald-500">
                         <div class="p-2 md:p-4 bg-gradient-to-r from-emerald-50 to-white border-b border-slate-100">
                             <div class="flex items-center justify-between">
                                 <div>
@@ -158,7 +158,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-3 md:gap-4 mb-2 md:mb-3">
-                    <div class="corp-card dashboard-animate-section p-0 flex flex-col overflow-hidden border-t-4 border-cyan-500 shadow-md shadow-cyan-100/40">
+                    <div class="corp-card dashboard-kpi-card dashboard-kpi-card--branches dashboard-animate-section p-0 flex flex-col overflow-hidden border-t-4 border-cyan-500 shadow-md shadow-cyan-100/40">
                         <div class="p-2 md:p-4 bg-gradient-to-r from-cyan-100 via-cyan-50 to-white border-b border-cyan-100">
                             <div class="flex items-center justify-between">
                                 <div>
@@ -322,7 +322,7 @@
                                 {% for student in students %}
                                 <tr class="hover:bg-slate-50 transition-colors group">
                                     <td class="px-3 md:px-4 py-2.5 whitespace-nowrap">
-                                        <div onclick='openStudentModal({{ student | tojson }})' class="flex items-center cursor-pointer group">
+                                        <a href="{{ url_for('evaluations.student_progress_profile', student_id=student.id) }}" class="flex items-center cursor-pointer group" aria-label="View {{ student.employee_name }} profile">
                                             <div class="flex-shrink-0 h-8 w-8 md:h-9 md:w-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-[11px] md:text-xs shadow-md group-hover:shadow-lg transition-shadow">
                                                 {{ student.employee_name[0]|upper }}
                                             </div>
@@ -330,7 +330,7 @@
                                                 <div class="text-[11px] md:text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">{{ student.employee_name }}</div>
                                                 <div class="text-[10px] md:text-xs text-slate-400 font-medium uppercase hidden sm:block">{{ student.gender }}</div>
                                             </div>
-                                        </div>
+                                        </a>
                                     </td>
                                     <td class="px-3 md:px-4 py-2.5 whitespace-nowrap">
                                         <div class="text-[11px] md:text-sm font-bold text-slate-800">Sem {{ student.semester or '-' }}</div>

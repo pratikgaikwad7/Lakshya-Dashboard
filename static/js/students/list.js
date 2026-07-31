@@ -1,6 +1,7 @@
 // --- CORE APP ---
 
 document.addEventListener('DOMContentLoaded', async () => {
+    initStudentsMotion();
     populateBatchDropdowns(); 
     await loadFilterOptions(); 
     setCurrentYearFilter();   
@@ -93,7 +94,7 @@ function renderTable(data) {
 
     data.forEach((student, index) => {
         const row = document.createElement('tr');
-        row.className = 'hover:bg-slate-50 transition-colors group';
+        row.className = 'students-data-row transition-colors group';
         const displayYear = student.batch_year ? formatAcademicYear(student.batch_year) : '-';
         const displayLocation = student.plant_location ? student.plant_location.replace(/_/g, ' ') : '-';
         const status = student.status || 'active';
@@ -103,31 +104,31 @@ function renderTable(data) {
 
         // This markup is application-owned. Database values are assigned below with textContent.
         row.innerHTML = `
-            <td class="px-4 py-4 whitespace-nowrap text-center"><span data-field="serial" class="text-sm font-bold text-slate-500"></span></td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="whitespace-nowrap text-center"><span data-field="serial" class="students-serial font-bold"></span></td>
+            <td class="whitespace-nowrap">
                 <div class="flex items-center">
-                    <div data-field="avatar" class="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-inner"></div>
-                    <div class="ml-4">
-                        <div data-field="name" class="text-sm font-semibold text-slate-900"></div>
-                        <div data-field="ticket" class="text-xs text-slate-500"></div>
+                    <div data-field="avatar" class="students-avatar flex-shrink-0 flex items-center justify-center text-white font-bold"></div>
+                    <div class="students-info-copy">
+                        <div data-field="name" class="students-name font-semibold"></div>
+                        <div data-field="ticket" class="students-meta"></div>
                     </div>
                 </div>
             </td>
-            <td data-field="status" class="px-6 py-4 whitespace-nowrap"></td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div data-field="location" class="text-sm font-medium text-slate-800"></div>
-                <div data-field="batch" class="text-xs text-slate-500"></div>
+            <td data-field="status" class="whitespace-nowrap"></td>
+            <td class="whitespace-nowrap">
+                <div data-field="location" class="students-location font-medium"></div>
+                <div data-field="batch" class="students-meta"></div>
             </td>
-            <td data-field="department" class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium"></td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div data-field="mobile" class="text-sm text-slate-800"></div>
-                <div data-field="email" class="text-xs text-slate-400"></div>
+            <td data-field="department" class="whitespace-nowrap students-department font-medium"></td>
+            <td class="whitespace-nowrap">
+                <div data-field="mobile" class="students-mobile"></div>
+                <div data-field="email" class="students-email"></div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                 <button data-action="edit" class="text-indigo-600 hover:text-white hover:bg-indigo-600 border border-indigo-200 hover:border-indigo-600 px-3 py-1.5 rounded-md transition text-xs font-bold mr-2">
+            <td class="whitespace-nowrap text-right font-medium">
+                 <button data-action="edit" class="students-edit-action transition font-bold">
                     <i class="fas fa-edit mr-1"></i> Edit
                 </button>
-                <button data-action="delete" class="text-red-600 hover:text-white hover:bg-red-600 border border-red-200 hover:border-red-600 px-3 py-1.5 rounded-md transition text-xs font-bold">
+                <button data-action="delete" class="students-delete-action transition font-bold">
                     <i class="fas fa-trash mr-1"></i> Delete
                 </button>
             </td>
@@ -144,12 +145,53 @@ function renderTable(data) {
         row.querySelector('[data-field="email"]').textContent = student.email || '';
 
         const statusBadge = document.createElement('span');
-        statusBadge.className = `px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${badgeClass} capitalize`;
+        statusBadge.className = `students-status-badge inline-flex font-semibold ${badgeClass} capitalize`;
         statusBadge.textContent = status;
         row.querySelector('[data-field="status"]').appendChild(statusBadge);
         row.querySelector('[data-action="edit"]').addEventListener('click', () => editStudent(student.id));
         row.querySelector('[data-action="delete"]').addEventListener('click', () => deleteStudent(student.id));
         tableBody.appendChild(row);
+    });
+
+    if (window.gsap && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        window.gsap.from('#studentTableBody .students-data-row', {
+            autoAlpha: 0,
+            y: 8,
+            duration: 0.4,
+            stagger: 0.022,
+            ease: 'power2.out',
+            clearProps: 'opacity,transform,visibility'
+        });
+    }
+}
+
+function initStudentsMotion() {
+    if (!window.gsap || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    window.gsap.from('.students-header__inner > *, .students-command-bar > *', {
+        autoAlpha: 0,
+        y: -9,
+        duration: 0.5,
+        stagger: 0.06,
+        ease: 'power2.out',
+        clearProps: 'opacity,transform,visibility'
+    });
+
+    window.gsap.from('.students-filter-card, .students-data-card', {
+        autoAlpha: 0,
+        y: 14,
+        duration: 0.58,
+        stagger: 0.08,
+        ease: 'power3.out',
+        clearProps: 'opacity,transform,visibility'
+    });
+
+    window.gsap.to('.students-header__aurora--one', {
+        xPercent: -8,
+        duration: 8,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut'
     });
 }
 

@@ -58,11 +58,37 @@ async function editStudent(id) {
 }
 
 async function deleteStudent(id) {
-    if (!confirm('Are you sure you want to delete this student?')) return;
+    const confirmed = await window.LakshyaDialog.confirm({
+        title: 'Delete trainee record?',
+        message: 'This trainee and the associated record will be permanently removed.',
+        confirmLabel: 'Delete Trainee',
+        cancelLabel: 'Cancel',
+        tone: 'danger',
+        icon: 'fa-user-minus'
+    });
+    if (!confirmed) return;
+
     try {
         const response = await csrfFetch(`${API_URL}/${id}`, { method: 'DELETE' });
-        if (response.ok) loadStudents(); else alert('Failed to delete');
-    } catch (err) { console.error(err); }
+        if (response.ok) {
+            loadStudents();
+        } else {
+            await window.LakshyaDialog.alert({
+                title: 'Unable to delete trainee',
+                message: 'The trainee record could not be deleted. Please try again.',
+                tone: 'danger',
+                icon: 'fa-triangle-exclamation'
+            });
+        }
+    } catch (err) {
+        console.error(err);
+        await window.LakshyaDialog.alert({
+            title: 'Unable to delete trainee',
+            message: 'The server could not be reached. Please try again.',
+            tone: 'danger',
+            icon: 'fa-triangle-exclamation'
+        });
+    }
 }
 
 form.addEventListener('submit', async (e) => {
@@ -108,8 +134,20 @@ form.addEventListener('submit', async (e) => {
             await loadStudents();
         } else { 
             const err = await response.json(); 
-            alert('Error: ' + (err.error || 'Unknown error')); 
+            await window.LakshyaDialog.alert({
+                title: 'Unable to save trainee',
+                message: err.error || 'An unknown error occurred.',
+                tone: 'danger',
+                icon: 'fa-triangle-exclamation'
+            });
         }
-    } catch (err) { console.error(err); alert('Failed to save student'); }
+    } catch (err) {
+        console.error(err);
+        await window.LakshyaDialog.alert({
+            title: 'Unable to save trainee',
+            message: 'The server could not be reached. Please try again.',
+            tone: 'danger',
+            icon: 'fa-triangle-exclamation'
+        });
+    }
 });
-

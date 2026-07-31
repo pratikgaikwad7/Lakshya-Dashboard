@@ -32,6 +32,7 @@ from models.evaluations.queries import (
     get_student_active_evaluation,
     get_student_all_evaluations_list,
     get_student_evaluation_by_sem,
+    get_student_evaluation_history,
     get_student_last_evaluation,
 )
 from models.evaluations.schema import create_initial_evaluation, init_evaluation_db
@@ -45,7 +46,8 @@ __all__ = [
     "get_evaluation_dashboard_stats", "get_filtered_students_for_eval",
     "get_gender_options", "get_location_breakdown", "get_performance_distribution",
     "get_student_active_evaluation", "get_student_all_evaluations_list",
-    "get_student_evaluation_by_sem", "get_student_last_evaluation",
+    "get_student_evaluation_by_sem", "get_student_evaluation_history",
+    "get_student_last_evaluation",
     "get_students_by_cgpa_range", "get_students_by_score_range",
     "init_evaluation_db", "promote_student_semester", "upsert_evaluation_scores",
 ]

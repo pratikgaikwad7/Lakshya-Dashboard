@@ -13,6 +13,7 @@ from models.evaluation_model import (
     get_student_active_evaluation,
     get_student_all_evaluations_list,
     get_student_evaluation_by_sem,
+    get_student_evaluation_history,
     get_student_last_evaluation,
     promote_student_semester,
     upsert_evaluation_scores,
@@ -30,6 +31,20 @@ from services.excel.evaluation_import import import_evaluations
 
 
 evaluations_bp = Blueprint('evaluations', __name__)
+
+
+OJT_SCORE_FIELDS = (
+    ('Attendance', 'score_attendance', 'fa-calendar-check'),
+    ('Suggestions', 'score_suggestions', 'fa-lightbulb'),
+    ('Projects', 'score_projects', 'fa-diagram-project'),
+    ('Recognitions', 'score_recognitions', 'fa-award'),
+    ('Safety', 'score_safety', 'fa-shield-halved'),
+    ('Discipline', 'score_discipline', 'fa-user-check'),
+    ('BITS Attendance', 'score_bits_attendance', 'fa-book-open-reader'),
+    ('Equipment', 'score_equipment', 'fa-screwdriver-wrench'),
+    ('Shop Tasks', 'score_shop_task', 'fa-list-check'),
+    ('Function Output', 'score_function_output', 'fa-chart-line'),
+)
 
 
 @evaluations_bp.route('/evaluations')
@@ -115,6 +130,48 @@ def evaluation_sheet(student_id):
         is_latest_semester=viewing_semester >= active_semester,
         active_semester=active_semester,
         student_status=student.get('status', 'active'),
+    )
+
+
+@evaluations_bp.route('/evaluations/<int:student_id>/profile')
+@roles_required(*EVALUATION_MANAGEMENT_ROLES)
+def student_progress_profile(student_id):
+    student = _authorize_student(student_id)
+    evaluations = get_student_evaluation_history(student_id)
+
+    for evaluation in evaluations:
+        evaluation['final_eval'] = calculate_final_evaluation(evaluation)
+        evaluation['ojt_metrics'] = [
+            {
+                'label': label,
+                'value': float(evaluation.get(field) or 0),
+                'icon': icon,
+            }
+            for label, field, icon in OJT_SCORE_FIELDS
+        ]
+
+    completed_semesters = sum(
+        evaluation.get('semester_status') == 'completed'
+        for evaluation in evaluations
+    )
+    active_evaluation = next(
+        (
+            evaluation
+            for evaluation in reversed(evaluations)
+            if evaluation.get('semester_status') == 'ongoing'
+        ),
+        evaluations[-1] if evaluations else None,
+    )
+    summary = {
+        'completed_semesters': completed_semesters,
+        'current_semester': active_evaluation.get('semester') if active_evaluation else 0,
+    }
+
+    return render_template(
+        'student_progress_profile.html',
+        student=student,
+        evaluations=evaluations,
+        summary=summary,
     )
 
 

@@ -1,0 +1,42 @@
+    <section class="profile-panel semester-track-panel scroll-reveal">
+        <div class="profile-section-heading">
+            <div>
+                <span class="profile-section-kicker">Academic journey</span>
+                <h2>Seven-semester progress track</h2>
+            </div>
+            <span class="profile-section-meta">Select an available semester to view its complete record</span>
+        </div>
+
+        <ol class="semester-track" aria-label="Select a semester record">
+            {% for semester_number in range(1, 8) %}
+                {% set matching = all_semesters|selectattr('semester', 'equalto', semester_number)|list %}
+                {% set record = matching[0] if matching else none %}
+                {% set is_selected = record and semester_number == current_semester %}
+                <li class="{% if record and record.semester_status == 'completed' %}is-complete{% elif record and record.semester_status == 'ongoing' %}is-current{% endif %}">
+                    {% if record %}
+                    <a
+                        href="{{ url_for('evaluations.evaluation_sheet', student_id=student.id, semester=semester_number) }}"
+                        class="semester-track__button"
+                        {% if is_selected %}aria-current="page" aria-selected="true"{% else %}aria-selected="false"{% endif %}
+                    >
+                        <span class="semester-track__node">
+                            {% if record.semester_status == 'completed' %}
+                                <i class="fas fa-check"></i>
+                            {% else %}
+                                {{ semester_number }}
+                            {% endif %}
+                        </span>
+                        <strong>Sem {{ semester_number }}</strong>
+                        <small>{{ record.semester_status|capitalize }}</small>
+                    </a>
+                    {% else %}
+                    <span class="semester-track__button is-disabled" aria-disabled="true">
+                        <span class="semester-track__node">{{ semester_number }}</span>
+                        <strong>Sem {{ semester_number }}</strong>
+                        <small>Upcoming</small>
+                    </span>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ol>
+    </section>

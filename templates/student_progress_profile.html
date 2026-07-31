@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ student.employee_name }} · Progress Profile | LAKSHYA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/student-progress-profile.css') }}">
+</head>
+<body>
+    <div id="pageScrollProgress" class="page-scroll-progress" aria-hidden="true"></div>
+
+    <header class="profile-nav">
+        <div class="profile-shell profile-nav__inner">
+            <a href="{{ url_for('evaluations.list_evaluations') }}" class="profile-back-link">
+                <span class="profile-back-link__icon"><i class="fas fa-arrow-left"></i></span>
+                <span>Evaluation workspace</span>
+            </a>
+            {% if summary.current_semester %}
+            <a href="{{ url_for('evaluations.evaluation_sheet', student_id=student.id, semester=summary.current_semester) }}" class="profile-primary-action">
+                <i class="fas fa-file-signature"></i>
+                Open evaluation
+            </a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main>
+        <section class="profile-hero">
+            <div class="profile-hero__grid" aria-hidden="true"></div>
+            <div class="ambient-orb ambient-orb--one" aria-hidden="true"></div>
+            <div class="ambient-orb ambient-orb--two" aria-hidden="true"></div>
+
+            <div class="profile-shell profile-hero__content">
+                <div class="profile-hero__main profile-reveal">
+                    <div class="profile-avatar" aria-hidden="true">
+                        {{ (student.employee_name or '?')[0]|upper }}
+                        <span></span>
+                    </div>
+                    <div>
+                        <div class="profile-eyebrow">
+                            <span class="profile-live-dot"></span>
+                            Trainee profile
+                        </div>
+                        <h1>{{ student.employee_name or 'Unnamed trainee' }}</h1>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="profile-shell profile-content">
+            <section class="profile-panel identity-panel scroll-reveal">
+                <div class="profile-section-heading">
+                    <div>
+                        <span class="profile-section-kicker">Trainee record</span>
+                        <h2>Profile snapshot</h2>
+                    </div>
+                    <span class="student-status student-status--{{ student.status or 'active' }}">
+                        <i class="fas fa-circle"></i> {{ (student.status or 'active')|capitalize }}
+                    </span>
+                </div>
+                <dl class="identity-grid">
+                    <div><dt>Ticket number</dt><dd>{{ student.ticket_no or 'N/A' }}</dd></div>
+                    <div><dt>Plant location</dt><dd>{{ (student.plant_location or 'N/A').replace('_', ' ') }}</dd></div>
+                    <div><dt>Department</dt><dd>{{ student.department or 'N/A' }}</dd></div>
+                    <div><dt>Diploma branch</dt><dd>{{ student.diploma_branch or 'N/A' }}</dd></div>
+                    <div><dt>Batch year</dt><dd>{{ student.batch_year or 'N/A' }}</dd></div>
+                    <div><dt>Batch number</dt><dd>{{ student.batch_no or 'N/A' }}</dd></div>
+                    <div><dt>BC number</dt><dd>{{ student.bc_no or 'N/A' }}</dd></div>
+                    <div><dt>BITS stream</dt><dd>{{ student.bits_stream or 'N/A' }}</dd></div>
+                    <div><dt>Function</dt><dd>{{ student.function or 'N/A' }}</dd></div>
+                    <div><dt>Reporting manager</dt><dd>{{ student.reporting_manager or 'N/A' }}</dd></div>
+                    <div><dt>Date of joining</dt><dd>{{ student.date_of_joining or 'N/A' }}</dd></div>
+                    <div><dt>Programme end date</dt><dd>{{ student.end_date or 'N/A' }}</dd></div>
+                    <div><dt>Email</dt><dd>{{ student.email or 'N/A' }}</dd></div>
+                    <div><dt>Mobile</dt><dd>{{ student.mobile_no or 'N/A' }}</dd></div>
+                    <div><dt>Gender</dt><dd>{{ student.gender or 'N/A' }}</dd></div>
+                </dl>
+            </section>
+
+            <section class="profile-panel semester-track-panel scroll-reveal">
+                <div class="profile-section-heading">
+                    <div>
+                        <span class="profile-section-kicker">Academic journey</span>
+                        <h2>Seven-semester progress track</h2>
+                    </div>
+                    <span class="profile-section-meta">Select an available semester to view its complete record</span>
+                </div>
+                <ol class="semester-track" aria-label="Select a semester record">
+                    {% for semester_number in range(1, 8) %}
+                        {% set matching = evaluations|selectattr('semester', 'equalto', semester_number)|list %}
+                        {% set record = matching[0] if matching else none %}
+                        {% set is_selected = record and semester_number == summary.current_semester %}
+                        <li class="{% if record and record.semester_status == 'completed' %}is-complete{% elif record and record.semester_status == 'ongoing' %}is-current{% endif %}">
+                            <button
+                                type="button"
+                                class="semester-track__button"
+                                {% if record %}
+                                data-semester-target="semester-{{ semester_number }}"
+                                aria-controls="semester-{{ semester_number }}"
+                                aria-selected="{{ 'true' if is_selected else 'false' }}"
+                                {% else %}
+                                disabled
+                                aria-disabled="true"
+                                {% endif %}
+                            >
+                                <span class="semester-track__node">
+                                    {% if record and record.semester_status == 'completed' %}
+                                        <i class="fas fa-check"></i>
+                                    {% else %}
+                                        {{ semester_number }}
+                                    {% endif %}
+                                </span>
+                                <strong>Sem {{ semester_number }}</strong>
+                                <small>{% if record %}{{ record.semester_status|capitalize }}{% else %}Upcoming{% endif %}</small>
+                            </button>
+                        </li>
+                    {% endfor %}
+                </ol>
+            </section>
+
+            <section class="semester-records scroll-reveal" id="semesterRecords" aria-live="polite">
+                <div class="profile-section-heading semester-records__heading">
+                    <div>
+                        <span class="profile-section-kicker">Selected semester</span>
+                        <h2>Complete performance record</h2>
+                    </div>
+                    <span id="selectedSemesterLabel" class="profile-section-meta">
+                        {% if summary.current_semester %}Semester {{ summary.current_semester }}{% else %}No record selected{% endif %}
+                    </span>
+                </div>
+
+                {% for evaluation in evaluations %}
+                <article
+                    class="semester-card semester-detail-panel"
+                    id="semester-{{ evaluation.semester }}"
+                    data-semester-panel
+                    {% if evaluation.semester != summary.current_semester %}hidden{% endif %}
+                >
+                    <header class="semester-card__header">
+                        <div class="semester-card__title">
+                            <span class="semester-card__number">{{ "%02d"|format(evaluation.semester) }}</span>
+                            <div>
+                                <span class="profile-section-kicker">Semester record</span>
+                                <h3>Semester {{ evaluation.semester }}</h3>
+                            </div>
+                        </div>
+                        <div class="semester-card__header-meta">
+                            <span class="semester-status semester-status--{{ evaluation.semester_status }}">
+                                <i class="fas fa-circle"></i> {{ evaluation.semester_status|capitalize }}
+                            </span>
+                            {% if evaluation.updated_at %}
+                            <small>Updated {{ evaluation.updated_at.strftime('%d %b %Y') if evaluation.updated_at.strftime is defined else evaluation.updated_at }}</small>
+                            {% endif %}
+                        </div>
+                    </header>
+
+                    <div class="semester-card__overview">
+                        <div class="score-orbit" style="--score: {{ evaluation.final_eval.grand_total }}%">
+                            <div>
+                                <strong>{{ evaluation.final_eval.grand_total|round(1) }}</strong>
+                                <span>out of 100</span>
+                            </div>
+                        </div>
+                        <div class="semester-score-grid">
+                            <div class="semester-score semester-score--training">
+                                <span><i class="fas fa-person-chalkboard"></i> Training</span>
+                                <strong>{{ evaluation.final_eval.training_total|round(1) }}<small>/20</small></strong>
+                                <p>Raw marks {{ evaluation.final_eval.training_marks|round(1) }}/100</p>
+                            </div>
+                            <div class="semester-score semester-score--ojt">
+                                <span><i class="fas fa-industry"></i> OJT</span>
+                                <strong>{{ evaluation.final_eval.ojt_total|round(1) }}<small>/50</small></strong>
+                                <p>Raw score {{ evaluation.final_eval.ojt_marks|round(1) }}/100</p>
+                            </div>
+                            <div class="semester-score semester-score--bits">
+                                <span><i class="fas fa-graduation-cap"></i> BITS</span>
+                                <strong>{{ evaluation.final_eval.bits_total|round(1) }}<small>/30</small></strong>
+                                <p>CGPA {{ evaluation.final_eval.bits_cgpa|round(2) }}/10</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ojt-breakdown">
+                        <div class="ojt-breakdown__heading">
+                            <div>
+                                <span class="profile-section-kicker">On-the-job training</span>
+                                <h4>Competency breakdown</h4>
+                            </div>
+                        </div>
+                        <div class="ojt-metric-grid">
+                            {% for metric in evaluation.ojt_metrics %}
+                            <div class="ojt-metric">
+                                <div class="ojt-metric__label">
+                                    <span><i class="fas {{ metric.icon }}"></i></span>
+                                    <p>{{ metric.label }}</p>
+                                    <strong>{{ metric.value|round(1) }}</strong>
+                                </div>
+                                <div class="ojt-metric__track">
+                                    <span style="width: {{ metric.value * 10 }}%"></span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <footer class="semester-card__footer">
+                        <a href="{{ url_for('evaluations.evaluation_sheet', student_id=student.id, semester=evaluation.semester) }}">
+                            View evaluation sheet <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </footer>
+                </article>
+                {% else %}
+                <div class="profile-panel profile-empty-state">
+                    <i class="fas fa-folder-open"></i>
+                    <p>No semester records have been created for this trainee.</p>
+                </div>
+                {% endfor %}
+            </section>
+        </div>
+    </main>
+
+    <footer class="profile-footer">
+        <div class="profile-shell">
+            <span>LAKSHYA · Trainee Evaluation Intelligence</span>
+            <a href="#top" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;">Back to top <i class="fas fa-arrow-up"></i></a>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/evaluations/student-progress-profile.js') }}"></script>
+</body>
+</html>

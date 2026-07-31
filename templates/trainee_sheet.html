@@ -3,28 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trainee Evaluation Sheet | LAKSHYA</title>
+    <title>{{ student.employee_name }} · Semester {{ current_semester }} Evaluation | LAKSHYA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/filter-system.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/enterprise-dialog.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/student-progress-profile.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/trainee-sheet.css') }}">
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="evaluation-page">
+    <div id="sheetScrollProgress" class="page-scroll-progress" aria-hidden="true"></div>
 
     {% include 'partials/evaluations/sheet_header.html' %}
 
-    <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
-    {% include 'partials/evaluations/summary.html' %}
+    <main id="evaluationSheetMain">
+        <div class="profile-shell evaluation-content">
+            {% include 'partials/evaluations/sheet_semester_journey.html' %}
 
-    {% include 'partials/evaluations/view_mode.html' %}
+            <section class="semester-records scroll-reveal" id="semesterRecords">
+                <div class="profile-section-heading semester-records__heading">
+                    <div>
+                        <span class="profile-section-kicker">Selected semester</span>
+                        <h2>Complete performance record</h2>
+                    </div>
+                    <span class="profile-section-meta">Semester {{ current_semester }}</span>
+                </div>
 
-    {% include 'partials/evaluations/edit_form.html' %}
+                {% include 'partials/evaluations/view_mode.html' %}
+                {% include 'partials/evaluations/edit_form.html' %}
+            </section>
+        </div>
     </main>
 
-    {% include 'partials/evaluations/sheet_student_modal.html' %}
-
+    <script src="{{ url_for('static', filename='js/components/enterprise-dialog.js') }}"></script>
     <script src="{{ url_for('static', filename='js/evaluations/sheet.js') }}"></script>
 </body>
 </html>

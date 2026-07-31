@@ -48,14 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', closeEditModal);
     });
 
-    document.querySelectorAll('.users-delete-form').forEach(form => {
-        form.addEventListener('submit', event => {
-            if (!window.confirm(`Delete the account "${form.dataset.username}"? This cannot be undone.`)) {
-                event.preventDefault();
-            }
-        });
-    });
-
     editForm.addEventListener('submit', event => {
         if (passwordInput.value !== confirmationInput.value) {
             event.preventDefault();

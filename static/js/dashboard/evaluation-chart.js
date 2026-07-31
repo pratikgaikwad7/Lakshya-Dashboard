@@ -210,6 +210,11 @@ function openEvalStudentModal(range) {
             const row = document.createElement('tr');
             row.className = 'hover:bg-indigo-50 cursor-pointer transition-colors';
             row.dataset.index = String(index);
+            if (student.id) {
+                row.dataset.profileUrl = `/evaluations/${encodeURIComponent(student.id)}/profile`;
+                row.tabIndex = 0;
+                row.setAttribute('aria-label', `View ${student.employee_name || 'student'} profile`);
+            }
             const values = [
                 student.employee_name || '',
                 student.ticket_no || '',
@@ -224,7 +229,15 @@ function openEvalStudentModal(range) {
                     : cellIndex === 0
                         ? 'px-4 py-2 text-sm font-medium text-slate-900'
                         : 'px-4 py-2 text-sm text-slate-600';
-                cell.textContent = String(value);
+                if (cellIndex === 0 && student.id) {
+                    const profileLink = document.createElement('a');
+                    profileLink.href = row.dataset.profileUrl;
+                    profileLink.className = 'font-semibold text-slate-900 hover:text-indigo-600 transition-colors';
+                    profileLink.textContent = String(value);
+                    cell.appendChild(profileLink);
+                } else {
+                    cell.textContent = String(value);
+                }
                 row.appendChild(cell);
             });
             tbody.appendChild(row);
@@ -232,12 +245,18 @@ function openEvalStudentModal(range) {
 
         if (tbody) {
             tbody.addEventListener('click', function(e) {
+                if (e.target.closest('a')) return;
                 const row = e.target.closest('tr');
-                if (row && row.dataset.index !== undefined) {
-                    const index = parseInt(row.dataset.index);
-                    const studentData = students[index];
-                    openStudentModal(studentData);
+                if (row && row.dataset.profileUrl) {
+                    window.location.href = row.dataset.profileUrl;
                 }
+            });
+            tbody.addEventListener('keydown', function(e) {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                const row = e.target.closest('tr');
+                if (!row || !row.dataset.profileUrl) return;
+                e.preventDefault();
+                window.location.href = row.dataset.profileUrl;
             });
         }
     });
