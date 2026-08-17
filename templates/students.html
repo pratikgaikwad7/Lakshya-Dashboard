@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/students.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 </head>
-<body class="students-page text-slate-800 antialiased">
+<body class="students-page text-slate-800 antialiased" data-can-view-evaluations="{{ 'true' if can_view_evaluations else 'false' }}">
 
     <!-- Hidden File Input for Excel Upload -->
     <input type="file" id="excelUploadInput" accept=".xlsx" class="hidden">
@@ -44,6 +44,9 @@
                 <p>Manage trainee profiles and records</p>
             </div>
             <div class="students-command-actions flex">
+                <button id="studentFilterToggle" type="button" onclick="toggleStudentFilters()" aria-controls="studentFilterSidebar" aria-expanded="false" class="students-filter-toggle inline-flex items-center border text-sm font-bold text-white transition-colors w-full justify-center md:w-auto">
+                    <i class="fas fa-sliders-h mr-2"></i> Filters
+                </button>
                 <button onclick="document.getElementById('excelUploadInput').click()" class="students-upload-action inline-flex items-center border text-sm font-bold text-white transition-colors w-full justify-center md:w-auto">
                     <i class="fas fa-file-excel mr-2"></i> Upload Excel
                 </button>
@@ -53,24 +56,38 @@
             </div>
         </div>
 
-        <!-- FILTER BAR -->
-        <div class="students-filter-card lakshya-filter-inline lakshya-filter-surface">
+        <!-- FILTER SIDEBAR -->
+        <aside id="studentFilterSidebar" class="students-filter-sidebar lakshya-filter-surface" aria-hidden="true" aria-label="Student filters">
             <div class="lakshya-filter-header">
                 <div class="lakshya-filter-heading">
                     <span class="lakshya-filter-icon"><i class="fas fa-sliders-h"></i></span>
                     <div>
                         <div class="lakshya-filter-title-row">
                             <h3 class="lakshya-filter-title">Smart Filters</h3>
-                            <span class="lakshya-filter-live">Live</span>
+                        <span class="lakshya-filter-live">Live</span>
+                        <span class="students-filter-status" data-filter-status role="status" aria-live="polite" hidden></span>
                         </div>
                         <p class="lakshya-filter-subtitle">Refine student records</p>
                     </div>
                 </div>
+                <button type="button" onclick="toggleStudentFilters(false)" class="lakshya-filter-close" aria-label="Close filters">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <div class="students-filter-grid lakshya-filter-inline-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 items-end">
-                
-                <div class="lg:col-span-1">
-                    <label class="lakshya-filter-label">
+            <div class="lakshya-filter-body">
+                <div class="students-filter-grid">
+                <div>
+                    <label for="filter_employee_name" class="lakshya-filter-label"><i class="fas fa-search mr-1"></i> Student Name</label>
+                    <input id="filter_employee_name" type="search" class="lakshya-filter-control" placeholder="Type at least 2 letters" autocomplete="off" data-live-filter>
+                </div>
+
+                <div>
+                    <label for="filter_ticket_no" class="lakshya-filter-label"><i class="fas fa-id-badge mr-1"></i> Ticket No</label>
+                    <input id="filter_ticket_no" type="search" class="lakshya-filter-control" placeholder="Search ticket" autocomplete="off" data-live-filter>
+                </div>
+
+                <div>
+                    <label for="filter_location" class="lakshya-filter-label">
                         <i class="fas fa-map-marker-alt mr-1 text-slate-400"></i> Location
                     </label>
                     <select id="filter_location" class="lakshya-filter-control">
@@ -78,8 +95,8 @@
                     </select>
                 </div>
 
-                <div class="lg:col-span-1">
-                    <label class="lakshya-filter-label">
+                <div>
+                    <label for="filter_year" class="lakshya-filter-label">
                         <i class="fas fa-calendar mr-1 text-slate-400"></i> Year
                     </label>
                     <select id="filter_year" onchange="syncBatchFromYear('filter')" class="lakshya-filter-control">
@@ -87,8 +104,8 @@
                     </select>
                 </div>
 
-                <div class="lg:col-span-1">
-                    <label class="lakshya-filter-label">
+                <div>
+                    <label for="filter_department" class="lakshya-filter-label">
                         <i class="fas fa-building mr-1 text-slate-400"></i> Dept
                     </label>
                     <select id="filter_department" class="lakshya-filter-control">
@@ -97,8 +114,8 @@
                 </div>
 
                 <!-- BITS STREAM FILTER -->
-                <div class="lg:col-span-1">
-                    <label class="lakshya-filter-label">
+                <div>
+                    <label for="filter_bits_stream" class="lakshya-filter-label">
                         <i class="fas fa-code-branch mr-1 text-slate-400"></i> Stream
                     </label>
                     <select id="filter_bits_stream" class="lakshya-filter-control">
@@ -106,8 +123,8 @@
                     </select>
                 </div>
 
-                <div class="lg:col-span-1">
-                    <label class="lakshya-filter-label">
+                <div>
+                    <label for="filter_batch_no" class="lakshya-filter-label">
                         <i class="fas fa-hashtag mr-1 text-slate-400"></i> Batch
                     </label>
                     <select id="filter_batch_no" onchange="syncYearFromBatch('filter')" class="lakshya-filter-control">
@@ -115,8 +132,8 @@
                     </select>
                 </div>
 
-                <div class="lg:col-span-1">
-                    <label class="lakshya-filter-label">
+                <div>
+                    <label for="filter_function" class="lakshya-filter-label">
                         <i class="fas fa-cogs mr-1 text-slate-400"></i> Func
                     </label>
                     <select id="filter_function" class="lakshya-filter-control">
@@ -124,8 +141,8 @@
                     </select>
                 </div>
 
-                <div class="lg:col-span-1">
-                    <label class="lakshya-filter-label">
+                <div>
+                    <label for="filter_status" class="lakshya-filter-label">
                         <i class="fas fa-user-check mr-1 text-slate-400"></i> Status
                     </label>
                     <select id="filter_status" class="lakshya-filter-control">
@@ -136,16 +153,34 @@
                     </select>
                 </div>
 
-                <div class="lg:col-span-1 flex gap-2">
-                    <button type="button" onclick="applyFilters()" class="lakshya-filter-primary flex-1 h-10">
-                        <i class="fas fa-filter"></i> Apply
-                    </button>
-                    <button type="button" onclick="clearFilters()" class="lakshya-filter-secondary h-10 px-3" aria-label="Clear filters">
-                        <i class="fas fa-times"></i>
+                <div>
+                    <label for="filter_branch" class="lakshya-filter-label"><i class="fas fa-graduation-cap mr-1"></i> Diploma Branch</label>
+                    <select id="filter_branch" class="lakshya-filter-control"><option value="">All Branches</option></select>
+                </div>
+
+                <div>
+                    <label for="filter_gender" class="lakshya-filter-label"><i class="fas fa-venus-mars mr-1"></i> Gender</label>
+                    <select id="filter_gender" class="lakshya-filter-control">
+                        <option value="">All Genders</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="filter_reporting_manager" class="lakshya-filter-label"><i class="fas fa-user-tie mr-1"></i> Reporting Manager</label>
+                    <input id="filter_reporting_manager" type="search" class="lakshya-filter-control" placeholder="Search manager" autocomplete="off" data-live-filter>
+                </div>
+
+                <div class="lakshya-filter-actions">
+                    <button type="button" onclick="clearFilters()" class="lakshya-filter-secondary w-full px-3" aria-label="Reset all student filters">
+                        <i class="fas fa-rotate-left"></i> Reset Filters
                     </button>
                 </div>
+                </div>
             </div>
-        </div>
+        </aside>
+        <button id="studentFilterOverlay" type="button" onclick="toggleStudentFilters(false)" class="students-filter-overlay hidden" aria-label="Close filters"></button>
 
         <!-- Table -->
         <div class="students-data-card overflow-hidden">
@@ -398,6 +433,7 @@
     <!-- External JS File -->
     <script src="{{ url_for('static', filename='js/components/enterprise-dialog.js') }}"></script>
     <script src="{{ url_for('static', filename='js/security/csrf.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/live-filter-controller.js') }}"></script>
     <script src="{{ url_for('static', filename='js/students/state.js') }}"></script>
     <script src="{{ url_for('static', filename='js/students/batch-and-dates.js') }}"></script>
     <script src="{{ url_for('static', filename='js/students/list.js') }}"></script>

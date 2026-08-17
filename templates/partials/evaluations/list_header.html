@@ -11,7 +11,7 @@
                 <button id="evaluationFilterToggle" type="button" onclick="toggleSidebar()" aria-label="Filters" aria-controls="filterSidebar" aria-expanded="false" class="evaluation-filter-toggle lakshya-filter-toggle flex items-center gap-2 transition border">
                     <i class="fas fa-sliders-h"></i>
                     <span class="text-xs font-bold uppercase hidden sm:inline">Filters</span>
-                    {% if filters.semester_status or filters.semester or filters.year or filters.ticket_no %}
+                    {% if filters.semester_status or filters.semester or filters.year or filters.ticket_no or filters.employee_name %}
                         <span class="evaluation-filter-toggle__active"></span>
                     {% endif %}
                 </button>

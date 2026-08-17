@@ -47,6 +47,15 @@ function initializeDashboardContent(options = {}) {
     const femaleCount = Number(main.dataset.femaleCount || window.dashboardConfig?.femaleCount || 0);
     initGenderChart(maleCount, femaleCount);
     updateEvaluationChart();
+    if (typeof updateDashboardBranchHeatmap === 'function') {
+        updateDashboardBranchHeatmap(main);
+    }
+    if (typeof initializeBatchHistoryFilter === 'function') {
+        initializeBatchHistoryFilter(main);
+    }
+    if (typeof initializeDashboardStudentExplorer === 'function') {
+        initializeDashboardStudentExplorer(main);
+    }
 
     if (window.DashboardAnimations) {
         window.DashboardAnimations.initSections(main);

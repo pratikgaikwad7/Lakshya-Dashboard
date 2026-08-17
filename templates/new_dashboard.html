@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>New Dashboard | LAKSHYA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/new-dashboard.css') }}">
+</head>
+<body class="new-dashboard-page h-screen flex flex-col">
+    <header class="tracking-header">
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="tracking-brand" aria-label="Back to admin dashboard">
+            <span class="tracking-brand__mark"><i class="fas fa-rocket"></i></span>
+            <span><strong>LAKSHYA</strong><small>Student tracking</small></span>
+        </a>
+        <div class="tracking-header__actions">
+            <a href="{{ url_for('user_dashboard.dashboard') }}" class="tracking-compare"><i class="fas fa-arrow-left"></i> Old dashboard</a>
+            <span class="tracking-role">{{ role }}</span>
+            <form method="POST" action="{{ url_for('auth.logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="tracking-icon-button" aria-label="Log out"><i class="fas fa-sign-out-alt"></i></button>
+            </form>
+        </div>
+    </header>
+
+    <section class="tracking-command" aria-labelledby="tracking-title">
+        <div>
+            <h1 id="tracking-title">Student tracking overview</h1>
+            <p>Explore students, batches, plant distribution and evaluation performance in one place.</p>
+        </div>
+        <div class="tracking-totals" aria-label="Current totals">
+            <span><strong>{{ stats.total }}</strong> students</span>
+            <span><strong>{{ stats.batches }}</strong> active batches</span>
+            <span><strong>{{ stats.male or 0 }}</strong> male</span>
+            <span><strong>{{ stats.female or 0 }}</strong> female</span>
+        </div>
+    </section>
+
+    <div class="tracking-toolbar">
+        <button id="filterToggleButton" type="button" onclick="toggleSidebar()" aria-controls="filterSidebar" aria-expanded="false" class="tracking-filter-button">
+            <i class="fas fa-sliders-h"></i><span>Filter records</span>
+        </button>
+        <div id="activeFilterSummary" class="tracking-filter-summary" aria-live="polite">
+            {% for key, value in filters.items() %}
+                {% if value and key != 'student_status' and key != 'ticket_no' %}
+                    {% if value is iterable and value is not string %}
+                        {% for item in value %}<span class="active-filter-tag">{{ key.replace('_', ' ') }}: <b>{{ item|string|replace('_', ' ') }}</b></span>{% endfor %}
+                    {% elif value is string %}<span class="active-filter-tag">{{ key.replace('_', ' ') }}: <b>{{ value }}</b></span>{% endif %}
+                {% endif %}
+            {% endfor %}
+            <span class="tracking-filter-default">Showing active student records</span>
+        </div>
+    </div>
+
+    <div class="flex-1 flex overflow-hidden">
+        {% set dashboard_endpoint = 'user_dashboard.new_dashboard' %}
+        {% include 'partials/dashboard/filters.html' %}
+        <button id="sidebarBackdrop" class="sidebar-backdrop" type="button" aria-label="Close filters" onclick="toggleSidebar(false)"></button>
+        {% include 'partials/dashboard/new_content.html' %}
+    </div>
+
+    {% include 'partials/dashboard/student_modal.html' %}
+    <script src="{{ url_for('static', filename='js/security/csrf.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard/loading-state.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard/core.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/live-filter-controller.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard/filters.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard/evaluation-chart.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard/student-modal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pages/new-dashboard.js') }}"></script>
+    <script>window.dashboardConfig = { maleCount: {{ stats.male or 0 }}, femaleCount: {{ stats.female or 0 }} };</script>
+</body>
+</html>

@@ -2,7 +2,12 @@ from flask import Blueprint, jsonify, render_template, request
 from flask_login import current_user
 
 from extensions import limiter
-from security.access import STUDENT_MANAGEMENT_ROLES, assigned_plant_required, roles_required
+from security.access import (
+    EVALUATION_MANAGEMENT_ROLES,
+    STUDENT_MANAGEMENT_ROLES,
+    assigned_plant_required,
+    roles_required,
+)
 from services.excel.student_import import import_students
 from services.student_service import (
     create_student,
@@ -21,7 +26,10 @@ students_bp = Blueprint('students', __name__)
 def index():
     if current_user.role == 'SDC Coordinator':
         assigned_plant_required()
-    return render_template('students.html')
+    return render_template(
+        'students.html',
+        can_view_evaluations=current_user.role in EVALUATION_MANAGEMENT_ROLES,
+    )
 
 
 @students_bp.route('/api/students/filters', methods=['GET'])
@@ -41,6 +49,11 @@ def api_get_students():
         'function': request.args.get('function'),
         'bits_stream': request.args.get('bits_stream'),
         'student_status': request.args.get('student_status'),
+        'employee_name': request.args.get('employee_name'),
+        'ticket_no': request.args.get('ticket_no'),
+        'branch': request.args.get('branch'),
+        'gender': request.args.get('gender'),
+        'reporting_manager': request.args.get('reporting_manager'),
     }
     return jsonify(list_students({key: value for key, value in filters.items() if value}))
 

@@ -102,6 +102,44 @@
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
 }
 
+[data-filter-status] {
+    color: #475569;
+    font-size: 0.625rem;
+    font-weight: 700;
+}
+
+[data-filter-status]::before {
+    display: inline-block;
+    width: 0.7rem;
+    height: 0.7rem;
+    margin-right: 0.3rem;
+    content: "";
+    border: 2px solid #cbd5e1;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    vertical-align: -0.1rem;
+    animation: lakshyaFilterSpin 0.7s linear infinite;
+}
+
+[data-filter-status][data-state="error"] {
+    color: #b91c1c;
+}
+
+[data-filter-status][data-state="error"]::before {
+    display: none;
+}
+
+.is-filtering .lakshya-filter-control,
+.is-filtering [data-auto-filter],
+.is-filtering [data-live-search],
+.is-filtering [data-live-filter] {
+    opacity: 1;
+}
+
+@keyframes lakshyaFilterSpin {
+    to { transform: rotate(360deg); }
+}
+
 .lakshya-filter-close {
     width: 30px;
     height: 30px;

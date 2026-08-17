@@ -54,14 +54,17 @@ class PureLogicTests(unittest.TestCase):
             "semester": [1, 2],
             "plant_location": ["Pune_CV", "Sanand_PV1"],
             "ticket_no": "123",
+            "employee_name": "asha",
             "grand_total_min": 60,
         })
 
         self.assertIn("e.semester IN (%s,%s)", conditions)
         self.assertIn("s.plant_location IN (%s,%s)", conditions)
         self.assertIn("s.ticket_no LIKE %s", conditions)
+        self.assertIn("s.employee_name LIKE %s", conditions)
+        self.assertIn("%asha%", params)
         self.assertIn("e.calc_grand_total >= %s", conditions)
-        self.assertEqual(params, [1, 2, "%123%", "Pune_CV", "Sanand_PV1", 60])
+        self.assertEqual(params, [1, 2, "%123%", "%asha%", "Pune_CV", "Sanand_PV1", 60])
 
     def test_excel_helpers_keep_flexible_columns_and_score_limits(self):
         self.assertEqual(normalize_column_name(" Score_Bits Attendance "), "scorebitsattendance")

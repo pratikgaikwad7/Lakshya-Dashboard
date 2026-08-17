@@ -1,3 +1,5 @@
+from datetime import date
+
 from flask import Blueprint, jsonify, render_template, request
 from flask_login import current_user, login_required
 
@@ -16,9 +18,9 @@ from models.evaluation_model import (
     get_performance_distribution,
     get_students_by_score_range,
 )
-from models.student_model import get_filter_options
+from models.student_model import get_all_students, get_filter_options
 from schemas.dashboard import dashboard_filters_from_json, dashboard_filters_from_query
-from security.access import PLANT_RESTRICTED_ROLES, assigned_plant_required, force_plant_scope
+from security.access import EVALUATION_MANAGEMENT_ROLES, PLANT_RESTRICTED_ROLES, assigned_plant_required, force_plant_scope
 
 
 user_dashboard_bp = Blueprint('user_dashboard', __name__)
@@ -27,6 +29,70 @@ user_dashboard_bp = Blueprint('user_dashboard', __name__)
 @user_dashboard_bp.route('/user_dashboard', methods=['GET'])
 @login_required
 def dashboard():
+    return render_template('user_dashboard.html', **_dashboard_context())
+
+
+@user_dashboard_bp.route('/new-dashboard', methods=['GET'])
+@login_required
+def new_dashboard():
+    context = _dashboard_context()
+    today = date.today()
+    context['current_academic_year'] = today.year if today.month >= 4 else today.year - 1
+    return render_template('new_dashboard.html', **context)
+
+
+@user_dashboard_bp.route('/batches/<int:batch_year>/students', methods=['GET'])
+@login_required
+def batch_students(batch_year):
+    return _student_records(batch_year=batch_year)
+
+
+@user_dashboard_bp.route('/dashboard/student-records', methods=['GET'])
+@login_required
+def dashboard_student_records():
+    return _student_records()
+
+
+def _student_records(batch_year=None):
+    role = current_user.role
+    plant_restriction = assigned_plant_required() if role in PLANT_RESTRICTED_ROLES else None
+    options = get_filter_options(plant_location_restriction=plant_restriction)
+    selected_plant = plant_restriction or request.args.get('plant_location', '')
+    selected_status = request.args.get('student_status') if 'student_status' in request.args else 'active'
+    filters = {
+        'year': batch_year or request.args.get('year') or None,
+        'plant_location': selected_plant or None,
+        'department': request.args.get('department') or None,
+        'function': request.args.get('function') or None,
+        'bits_stream': request.args.get('bits_stream') or None,
+        'student_status': selected_status or None,
+        'employee_name': request.args.get('employee_name') or None,
+        'ticket_no': request.args.get('ticket_no') or None,
+        'branch': request.args.get('branch') or None,
+        'gender': request.args.get('gender') or None,
+    }
+    students = get_all_students({key: value for key, value in filters.items() if value is not None})
+    summary = {
+        'total': len(students),
+        'male': sum(str(student.get('gender', '')).lower() == 'male' for student in students),
+        'female': sum(str(student.get('gender', '')).lower() == 'female' for student in students),
+        'active': sum(student.get('status') == 'active' for student in students),
+        'completed': sum(student.get('status') == 'completed' for student in students),
+        'dropped': sum(student.get('status') == 'dropped' for student in students),
+    }
+    return render_template(
+        'batch_students.html',
+        batch_year=batch_year,
+        students=students,
+        summary=summary,
+        filters=filters,
+        options=options,
+        role=role,
+        can_view_profiles=role in EVALUATION_MANAGEMENT_ROLES,
+    )
+
+
+def _dashboard_context():
     filters = force_plant_scope(dashboard_filters_from_query(request.args))
     role = current_user.role
 
@@ -63,8 +129,16 @@ def dashboard():
             'attrition_pct': round((row['dropped_students'] / total) * 100, 1) if total else 0,
         })
 
-    return render_template(
-        'user_dashboard.html',
+    historical_filters = dict(filters)
+    historical_filters.pop('student_status', None)
+    today = date.today()
+    all_student_summary = get_evaluation_dashboard_stats(historical_filters)['summary']
+    active_summary_filters = dict(historical_filters, student_status=['active'])
+    dropped_summary_filters = dict(historical_filters, student_status=['dropped'])
+    active_student_summary = get_evaluation_dashboard_stats(active_summary_filters)['summary']
+    dropped_student_summary = get_evaluation_dashboard_stats(dropped_summary_filters)['summary']
+
+    return dict(
         stats=get_evaluation_dashboard_stats(filters)['summary'],
         students=students,
         filters=filters,
@@ -75,6 +149,15 @@ def dashboard():
         location_stats=location_stats,
         attrition_data=attrition_data,
         batch_stats=get_batch_breakdown(filters),
+        batch_history_stats=get_batch_breakdown(historical_filters),
+        current_academic_year=today.year if today.month >= 4 else today.year - 1,
+        overview_stats={
+            'total': all_student_summary['total'],
+            'active': active_student_summary['total'],
+            'dropped': dropped_student_summary['total'],
+            'male': active_student_summary['male'],
+            'female': active_student_summary['female'],
+        },
         branch_stats=get_branch_location_breakdown(filters),
         branches=filter_options['branches'],
         functions=filter_options['functions'],

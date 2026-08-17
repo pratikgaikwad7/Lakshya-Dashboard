@@ -116,6 +116,26 @@ def get_all_students(filters=None):
             query += " AND status = %s"
             params.append(filters['student_status'])
 
+        if filters.get('employee_name'):
+            query += " AND employee_name LIKE %s"
+            params.append(f"%{filters['employee_name']}%")
+
+        if filters.get('ticket_no'):
+            query += " AND ticket_no LIKE %s"
+            params.append(f"%{filters['ticket_no']}%")
+
+        if filters.get('branch'):
+            query += " AND diploma_branch = %s"
+            params.append(filters['branch'])
+
+        if filters.get('gender'):
+            query += " AND gender = %s"
+            params.append(filters['gender'])
+
+        if filters.get('reporting_manager'):
+            query += " AND reporting_manager LIKE %s"
+            params.append(f"%{filters['reporting_manager']}%")
+
     query += " ORDER BY id DESC"
     
     cursor.execute(query, tuple(params))

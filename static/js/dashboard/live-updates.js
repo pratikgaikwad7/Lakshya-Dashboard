@@ -18,11 +18,13 @@
         const requestController = new AbortController();
         dashboardRequestController = requestController;
         const currentMain = document.getElementById('mainContent');
+        const filterSidebar = document.getElementById('filterSidebar');
         const previousKpis = window.DashboardAnimations
             ? window.DashboardAnimations.readKpiValues(currentMain)
             : [];
 
         if (currentMain) currentMain.classList.add('dashboard-refreshing');
+        window.LakshyaLiveFilters.setBusy(filterSidebar, true);
         setApplyButtonLoading(true);
 
         try {
@@ -49,7 +51,6 @@
             if (typeof initializeDashboardContent === 'function') {
                 initializeDashboardContent({ previousKpis });
             }
-            if (typeof toggleSidebar === 'function') toggleSidebar(false);
         } catch (error) {
             if (error.name !== 'AbortError') {
                 console.error('Unable to refresh dashboard filters:', error);
@@ -61,6 +62,7 @@
             if (dashboardRequestController === requestController) {
                 const activeMain = document.getElementById('mainContent');
                 if (activeMain) activeMain.classList.remove('dashboard-refreshing');
+                window.LakshyaLiveFilters.setBusy(filterSidebar, false);
                 setApplyButtonLoading(false);
                 dashboardRequestController = null;
             }
@@ -82,14 +84,12 @@
             submitFilters(form);
         });
 
-        const ticketInput = form.querySelector('[name="ticket_no"]');
-        if (ticketInput) {
-            let debounceTimer = null;
-            ticketInput.addEventListener('input', () => {
-                window.clearTimeout(debounceTimer);
-                debounceTimer = window.setTimeout(() => submitFilters(form), 450);
-            });
-        }
+        window.LakshyaLiveFilters.bind({
+            root: form,
+            autoSelector: '[data-auto-filter]',
+            liveSelector: '[data-live-search]',
+            onApply: () => submitFilters(form)
+        });
 
         const reset = form.querySelector('.filter-reset-button');
         if (reset) {

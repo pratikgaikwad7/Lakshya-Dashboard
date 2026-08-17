@@ -7,6 +7,7 @@
                             <div class="flex items-center gap-2">
                                 <h3 class="text-xs md:text-sm font-bold text-slate-800 uppercase tracking-wider">Smart Filters</h3>
                                 <span class="filter-live-indicator"><span></span>Live</span>
+                                <span class="dashboard-filter-status" data-filter-status role="status" aria-live="polite" hidden></span>
                             </div>
                             <p class="text-[10px] text-slate-400 mt-0.5">Refine dashboard intelligence</p>
                         </div>
@@ -16,7 +17,7 @@
                     </button>
                 </div>
 
-                <form id="dashboardFilterForm" action="{{ url_for('user_dashboard.dashboard') }}" method="GET" class="filter-form flex-1 overflow-y-auto px-4 md:px-5 py-4 md:py-5 space-y-4">
+                <form id="dashboardFilterForm" action="{{ url_for(dashboard_endpoint|default('user_dashboard.dashboard')) }}" method="GET" class="filter-form flex-1 overflow-y-auto px-4 md:px-5 py-4 md:py-5 space-y-4">
                     
                     {% macro checkbox_filter(name, label, options, selected_values) %}
                     <div class="filter-group relative" data-filter-name="{{ name }}">
@@ -41,7 +42,7 @@
                                     {% set opt_val = opt|string %}
                                     {% set is_checked = opt_val in selected_values %}
                                     <label class="flex items-center px-2 py-1 hover:bg-slate-50 rounded cursor-pointer text-[11px]">
-                                        <input type="checkbox" name="{{ name }}" value="{{ opt_val }}" class="mr-2 rounded text-indigo-600" {% if is_checked %}checked{% endif %} onchange="updateDropdownLabel('{{ name }}')"> 
+                                        <input type="checkbox" name="{{ name }}" value="{{ opt_val }}" class="mr-2 rounded text-indigo-600" {% if is_checked %}checked{% endif %} onchange="updateDropdownLabel('{{ name }}')" data-auto-filter>
                                         {% if name == 'year' %}
                                             {{ opt }}-{{ ((opt + 1)|string)[-2:] }}
                                         {% elif name == 'plant_location' %}
@@ -99,19 +100,24 @@
                         
                         {{ checkbox_filter('gender', 'Gender', genders, filters.gender) }}
                         {{ checkbox_filter('branch', 'Diploma Branch', branches, filters.branch) }}
+
+                        <div class="filter-group">
+                            <label for="dashboardEmployeeName" class="block text-[11px] md:text-sm font-semibold text-slate-600 mb-1">Student Name</label>
+                            <div class="dashboard-live-search">
+                                <i class="fas fa-search" aria-hidden="true"></i>
+                                <input id="dashboardEmployeeName" type="search" name="employee_name" value="{{ filters.employee_name }}" placeholder="Type at least 2 letters..." class="input-field" autocomplete="off" data-live-search>
+                            </div>
+                        </div>
                         
                         <div class="filter-group">
-                            <label class="block text-[11px] md:text-sm font-semibold text-slate-600 mb-1">Ticket No</label>
-                            <input type="text" name="ticket_no" value="{{ filters.ticket_no }}" placeholder="Search Ticket..." class="input-field">
+                            <label for="dashboardTicketNo" class="block text-[11px] md:text-sm font-semibold text-slate-600 mb-1">Ticket No</label>
+                            <input id="dashboardTicketNo" type="search" name="ticket_no" value="{{ filters.ticket_no }}" placeholder="Search Ticket..." class="input-field" autocomplete="off" data-live-search>
                         </div>
                     </div>
 
                     <div class="filter-actions pt-3 space-y-2 sticky bottom-0 pb-4 mt-4">
-                        <button id="applyFiltersButton" type="submit" class="filter-apply-button w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-bold text-xs md:text-sm shadow-md transition flex items-center justify-center gap-2">
-                            <i class="fas fa-check-circle"></i> Apply Filters
-                        </button>
-                        <a href="{{ url_for('user_dashboard.dashboard') }}" class="filter-reset-button w-full bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-bold text-xs md:text-sm transition text-center block">
-                            Reset
+                        <a href="{{ url_for(dashboard_endpoint|default('user_dashboard.dashboard')) }}" class="filter-reset-button w-full bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-bold text-xs md:text-sm transition text-center block">
+                            <i class="fas fa-rotate-left mr-1"></i> Reset Filters
                         </a>
                     </div>
                 </form>

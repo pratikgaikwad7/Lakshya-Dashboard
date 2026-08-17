@@ -125,6 +125,10 @@ select {
     padding: 16px clamp(12px, 2vw, 24px) 36px;
 }
 
+.student-filters-open .students-main {
+    margin-left: clamp(300px, 25vw, 360px);
+}
+
 .students-command-bar {
     min-height: 58px;
     gap: 16px;
@@ -153,13 +157,67 @@ select {
 }
 
 .students-upload-action,
-.students-add-action {
+.students-add-action,
+.students-filter-toggle {
     min-height: 38px;
     padding: 8px 13px;
     border-radius: 10px;
     font-size: 11px !important;
     white-space: nowrap;
     box-shadow: 0 14px 24px -18px rgba(15, 23, 42, .85);
+}
+
+.students-filter-toggle {
+    border-color: rgba(36, 116, 240, .28);
+    background: linear-gradient(135deg, var(--students-blue), var(--students-cyan));
+}
+
+.students-filter-toggle:hover,
+.students-filter-toggle[aria-expanded="true"] {
+    background: linear-gradient(135deg, #0f46b7, #0891b2);
+}
+
+.students-filter-sidebar {
+    position: fixed;
+    top: 72px;
+    bottom: 0;
+    left: 0;
+    z-index: 25;
+    width: clamp(300px, 25vw, 360px);
+    overflow: hidden;
+    border-radius: 0;
+    background: #fff;
+    box-shadow: 24px 0 50px -34px rgba(2, 8, 23, .85);
+    transform: translateX(-100%);
+    transition: transform .3s ease;
+}
+
+.student-filters-open .students-filter-sidebar {
+    transform: translateX(0);
+}
+
+.students-filter-sidebar .lakshya-filter-body {
+    height: calc(100% - 65px);
+    overflow-y: auto;
+}
+
+.students-filter-sidebar .lakshya-filter-icon {
+    color: var(--students-blue);
+    border-color: #dbeafe;
+    background: #eff6ff;
+}
+
+.students-filter-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.students-filter-overlay {
+    position: fixed;
+    inset: 64px 0 0;
+    z-index: 20;
+    border: 0;
+    background: rgba(2, 8, 23, .42);
 }
 
 .students-upload-action {
@@ -359,11 +417,37 @@ select {
 }
 
 .students-edit-action,
+.students-profile-action,
 .students-delete-action {
     min-height: 30px;
     padding: 5px 9px;
     border-radius: 8px;
     font-size: 10px;
+}
+
+.students-profile-action {
+    margin-right: 5px;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    background: #ecfdf5;
+}
+
+.students-profile-action:hover {
+    color: #fff;
+    border-color: #047857;
+    background: #047857;
+}
+
+.students-name[href] {
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.students-name[href]:hover,
+.students-name[href]:focus-visible {
+    color: var(--students-blue);
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 .students-edit-action {
@@ -469,6 +553,21 @@ select {
     }
 }
 
+@media (max-width: 900px) {
+    .student-filters-open .students-main {
+        margin-left: 0;
+    }
+
+    .students-filter-sidebar {
+        top: 64px;
+        width: min(92vw, 360px);
+    }
+
+    .students-filter-sidebar .students-filter-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+}
+
 @media (max-width: 767px) {
     .students-header,
     .students-header__inner {
@@ -507,7 +606,8 @@ select {
     }
 
     .students-upload-action,
-    .students-add-action {
+    .students-add-action,
+    .students-filter-toggle {
         min-height: 37px;
         padding-inline: 10px;
         font-size: 10px !important;

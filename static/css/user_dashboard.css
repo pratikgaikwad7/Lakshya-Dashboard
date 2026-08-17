@@ -379,6 +379,25 @@ h4.text-slate-400 {
     background: linear-gradient(to top, #f8fafc 76%, rgba(248, 250, 252, 0));
 }
 
+.dashboard-live-search {
+    position: relative;
+}
+
+.dashboard-live-search > i {
+    position: absolute;
+    top: 50%;
+    left: 11px;
+    z-index: 1;
+    color: #64748b;
+    font-size: 11px;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+.dashboard-live-search .input-field {
+    padding-left: 32px;
+}
+
 .filter-apply-button {
     position: relative;
     overflow: hidden;

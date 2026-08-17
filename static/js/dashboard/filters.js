@@ -5,12 +5,14 @@ function selectAll(name) {
     const checkboxes = document.querySelectorAll(`input[name="${name}"]`);
     checkboxes.forEach(cb => cb.checked = true);
     updateDropdownLabel(name);
+    requestDashboardFilterRefresh();
 }
 
 function clearSelection(name) {
     const checkboxes = document.querySelectorAll(`input[name="${name}"]`);
     checkboxes.forEach(cb => cb.checked = false);
     updateDropdownLabel(name);
+    requestDashboardFilterRefresh();
 }
 
 function updateDropdownLabel(name) {
@@ -19,6 +21,11 @@ function updateDropdownLabel(name) {
     if (btnLabel) {
         btnLabel.textContent = checkboxes.length > 0 ? `${checkboxes.length} Selected` : 'All';
     }
+}
+
+function requestDashboardFilterRefresh() {
+    const form = document.getElementById('dashboardFilterForm');
+    if (form) form.requestSubmit();
 }
 
 function closeDashboardDropdowns(exceptId) {
@@ -64,6 +71,9 @@ function getGlobalSidebarFilters() {
     // Ticket No is a text input
     const ticketNo = getVal('ticket_no');
     if(ticketNo) filters.ticket_no = ticketNo;
+
+    const employeeName = getVal('employee_name');
+    if(employeeName) filters.employee_name = employeeName;
 
     // Gather list filters from Sidebar
     const studentStatus = getCheckedVals('student_status');

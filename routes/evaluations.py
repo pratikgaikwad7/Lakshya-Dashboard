@@ -1,4 +1,6 @@
-from flask import Blueprint, render_template, request, redirect
+from pathlib import Path
+
+from flask import Blueprint, render_template, request, redirect, send_file
 from flask_login import current_user
 
 from exceptions import NotFoundError, ValidationError
@@ -63,6 +65,7 @@ def list_evaluations():
         'branch': request.args.get('branch', ''),
         'department': request.args.get('department', ''),
         'gender': request.args.get('gender', ''),
+        'employee_name': request.args.get('employee_name', '').strip(),
         'ticket_no': request.args.get('ticket_no', ''),
         'function': request.args.get('function', ''),
         'bits_stream': request.args.get('bits_stream', ''),
@@ -214,6 +217,13 @@ def upload_evaluations_excel():
         return render_template('upload_evaluations.html', **import_evaluations(file, restriction))
     except WorkbookValidationError as error:
         return _upload_error(str(error))
+
+
+@evaluations_bp.route('/evaluations/upload-excel/template')
+@roles_required(*EVALUATION_MANAGEMENT_ROLES)
+def download_evaluation_template():
+    template_path = Path(__file__).resolve().parents[1] / 'outputs' / 'evaluation-upload-template' / 'evaluation-upload-template.xlsx'
+    return send_file(template_path, as_attachment=True, download_name='LAKSHYA-evaluation-upload-template.xlsx')
 
 
 def _authorize_student(student_id):

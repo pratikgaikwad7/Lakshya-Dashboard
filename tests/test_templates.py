@@ -52,9 +52,9 @@ class TemplateTests(unittest.TestCase):
                 "lakshya-filter-actions",
             ),
             "templates/students.html": (
-                "lakshya-filter-inline",
+                "students-filter-sidebar",
                 "lakshya-filter-control",
-                "lakshya-filter-primary",
+                "lakshya-filter-secondary",
             ),
         }
         for relative_path, hooks in expected_hooks.items():
@@ -205,13 +205,27 @@ class TemplateTests(unittest.TestCase):
         ).read_text()
 
         self.assertIn("evaluation-list-page", template)
-        self.assertIn("gsap.min.js", template)
+        self.assertNotIn("gsap.min.js", template)
         self.assertIn("evaluation-list-header__aurora", header)
         self.assertIn("evaluation-data-grid", table)
         self.assertIn("min-height: 72px", stylesheet)
         self.assertIn("backdrop-filter", stylesheet)
         self.assertIn("prefers-reduced-motion: reduce", stylesheet)
-        self.assertIn("window.gsap", script)
+        self.assertNotIn("window.gsap", script)
+        self.assertIn("Sr. No.", table)
+        self.assertIn("fetch(nextUrl", script)
+
+    def test_evaluation_upload_explains_format_and_provides_template(self):
+        project_root = Path(__file__).parents[1]
+        template = (project_root / "templates/upload_evaluations.html").read_text()
+        script = (project_root / "static/js/evaluations/upload.js").read_text()
+        self.assertIn("download_evaluation_template", template)
+        self.assertIn("Ticket No", template)
+        self.assertIn("Score Attendance", template)
+        self.assertIn('id="evaluationUploadButton"', template)
+        self.assertIn("disabled", template)
+        self.assertIn("10 * 1024 * 1024", script)
+        self.assertTrue((project_root / "outputs/evaluation-upload-template/evaluation-upload-template.xlsx").exists())
 
     def test_students_page_matches_compact_enterprise_visual_system(self):
         project_root = Path(__file__).parents[1]

@@ -4,7 +4,9 @@ from schemas.common import ensure_list, require_mapping
 LIST_FILTERS = (
     "year", "plant_location", "semester", "student_status", "bits_stream", "gender"
 )
-SINGLE_FILTERS = ("department", "function", "branch", "batch_no", "ticket_no")
+SINGLE_FILTERS = (
+    "department", "function", "branch", "batch_no", "ticket_no", "employee_name"
+)
 
 
 def dashboard_filters_from_json(payload):
@@ -22,6 +24,7 @@ def dashboard_filters_from_query(args):
         "branch": args.getlist("branch"),
         "batch_no": args.getlist("batch_no"),
         "ticket_no": args.get("ticket_no", ""),
+        "employee_name": args.get("employee_name", ""),
     })
     if not filters["student_status"]:
         filters["student_status"] = ["active"]

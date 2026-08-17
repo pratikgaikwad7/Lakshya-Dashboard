@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/filter-system.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/student-evaluation.css') }}">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 </head>
 <body class="evaluation-list-page text-slate-800 antialiased h-screen flex flex-col overflow-hidden">
 
@@ -23,6 +22,7 @@
     {% include 'partials/evaluations/list_table.html' %}
     </div>
 
+    <script src="{{ url_for('static', filename='js/components/live-filter-controller.js') }}"></script>
     <script src="{{ url_for('static', filename='js/evaluations/list.js') }}"></script>
 </body>
 </html>

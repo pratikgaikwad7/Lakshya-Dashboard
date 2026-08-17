@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     populateBatchDropdowns(); 
     await loadFilterOptions(); 
     setCurrentYearFilter();   
+    initAutomaticFilters();
     loadStudents();            
 });
 
@@ -25,6 +26,7 @@ async function loadFilterOptions() {
         populateSelect('filter_department', data.departments);
         populateSelect('filter_bits_stream', data.bits_streams);
         populateSelect('filter_function', data.functions);
+        populateSelect('filter_branch', data.branches);
         populateSelectWithFormatter('filter_year', data.years, formatAcademicYear);
         populateSelectWithFormatter('filter_batch_no', data.batch_nos, b => `Batch ${b}`);
 
@@ -67,7 +69,7 @@ function setCurrentYearFilter() {
 
 function getFilterParams() {
     const params = new URLSearchParams();
-    const fields = ['location', 'year', 'department', 'batch_no', 'function', 'bits_stream'];
+    const fields = ['location', 'year', 'department', 'batch_no', 'function', 'bits_stream', 'employee_name', 'ticket_no', 'branch', 'gender', 'reporting_manager'];
     fields.forEach(f => {
         const val = document.getElementById(`filter_${f}`).value;
         if (val) params.append(f, val);
@@ -78,13 +80,29 @@ function getFilterParams() {
 }
 
 async function loadStudents() {
+    if (studentsRequestController) studentsRequestController.abort();
+    const requestController = new AbortController();
+    studentsRequestController = requestController;
+    const sidebar = document.getElementById('studentFilterSidebar');
+    const table = document.querySelector('.students-data-card');
+    window.LakshyaLiveFilters.setBusy(sidebar, true);
+    if (table) table.setAttribute('aria-busy', 'true');
     try {
         const queryString = getFilterParams();
-        const response = await fetch(`${API_URL}?${queryString}`);
+        const response = await fetch(`${API_URL}?${queryString}`, { signal: requestController.signal });
+        if (!response.ok) throw new Error(`Student request failed (${response.status})`);
         const data = await response.json();
         studentsCache = data;
         renderTable(data);
-    } catch (err) { console.error('Failed to load students', err); }
+    } catch (err) {
+        if (err.name !== 'AbortError') console.error('Failed to load students', err);
+    } finally {
+        if (studentsRequestController === requestController) {
+            window.LakshyaLiveFilters.setBusy(sidebar, false);
+            if (table) table.setAttribute('aria-busy', 'false');
+            studentsRequestController = null;
+        }
+    }
 }
 
 function renderTable(data) {
@@ -109,7 +127,7 @@ function renderTable(data) {
                 <div class="flex items-center">
                     <div data-field="avatar" class="students-avatar flex-shrink-0 flex items-center justify-center text-white font-bold"></div>
                     <div class="students-info-copy">
-                        <div data-field="name" class="students-name font-semibold"></div>
+                        <a data-field="name" class="students-name font-semibold"></a>
                         <div data-field="ticket" class="students-meta"></div>
                     </div>
                 </div>
@@ -125,9 +143,12 @@ function renderTable(data) {
                 <div data-field="email" class="students-email"></div>
             </td>
             <td class="whitespace-nowrap text-right font-medium">
-                 <button data-action="edit" class="students-edit-action transition font-bold">
+                <button data-action="edit" class="students-edit-action transition font-bold">
                     <i class="fas fa-edit mr-1"></i> Edit
                 </button>
+                <a data-action="profile" class="students-profile-action transition font-bold hidden">
+                    <i class="fas fa-chart-line mr-1"></i> Profile
+                </a>
                 <button data-action="delete" class="students-delete-action transition font-bold">
                     <i class="fas fa-trash mr-1"></i> Delete
                 </button>
@@ -137,6 +158,15 @@ function renderTable(data) {
         row.querySelector('[data-field="serial"]').textContent = String(index + 1);
         row.querySelector('[data-field="avatar"]').textContent = student.employee_name ? student.employee_name[0].toUpperCase() : 'N';
         row.querySelector('[data-field="name"]').textContent = student.employee_name || '';
+        if (CAN_VIEW_EVALUATIONS) {
+            row.querySelector('[data-field="name"]').href = `/evaluations/${encodeURIComponent(student.id)}/profile`;
+            row.querySelector('[data-field="name"]').setAttribute('aria-label', `View ${student.employee_name || 'student'} evaluation profile`);
+            const profileLink = row.querySelector('[data-action="profile"]');
+            profileLink.href = `/evaluations/${encodeURIComponent(student.id)}/profile`;
+            profileLink.classList.remove('hidden');
+        } else {
+            row.querySelector('[data-field="name"]').removeAttribute('href');
+        }
         row.querySelector('[data-field="ticket"]').textContent = student.ticket_no || '';
         row.querySelector('[data-field="location"]').textContent = displayLocation;
         row.querySelector('[data-field="batch"]').textContent = `${displayYear} | Batch: ${student.batch_no || '-'}`;
@@ -197,13 +227,51 @@ function initStudentsMotion() {
 
 function applyFilters() { loadStudents(); }
 
+function initAutomaticFilters() {
+    window.LakshyaLiveFilters.bind({
+        root: document.getElementById('studentFilterSidebar'),
+        autoSelector: 'select',
+        liveSelector: '[data-live-filter]',
+        onApply: loadStudents
+    });
+}
+
+function toggleStudentFilters(forceOpen) {
+    const sidebar = document.getElementById('studentFilterSidebar');
+    const overlay = document.getElementById('studentFilterOverlay');
+    const toggle = document.getElementById('studentFilterToggle');
+    const shouldOpen = typeof forceOpen === 'boolean'
+        ? forceOpen
+        : !document.body.classList.contains('student-filters-open');
+
+    document.body.classList.toggle('student-filters-open', shouldOpen);
+    sidebar.setAttribute('aria-hidden', String(!shouldOpen));
+    toggle.setAttribute('aria-expanded', String(shouldOpen));
+    overlay.classList.toggle('hidden', !shouldOpen || window.innerWidth > 900);
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') toggleStudentFilters(false);
+});
+
+window.addEventListener('resize', () => {
+    const overlay = document.getElementById('studentFilterOverlay');
+    const isOpen = document.body.classList.contains('student-filters-open');
+    overlay.classList.toggle('hidden', !isOpen || window.innerWidth > 900);
+});
+
 function clearFilters() {
     document.getElementById('filter_location').value = '';
+    document.getElementById('filter_year').value = '';
     document.getElementById('filter_department').value = '';
     document.getElementById('filter_bits_stream').value = '';
     document.getElementById('filter_batch_no').value = '';
     document.getElementById('filter_function').value = '';
     document.getElementById('filter_status').value = '';
-    setCurrentYearFilter();
+    document.getElementById('filter_employee_name').value = '';
+    document.getElementById('filter_ticket_no').value = '';
+    document.getElementById('filter_branch').value = '';
+    document.getElementById('filter_gender').value = '';
+    document.getElementById('filter_reporting_manager').value = '';
     loadStudents();
 }

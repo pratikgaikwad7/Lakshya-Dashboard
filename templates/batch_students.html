@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if batch_year %}{{ batch_year }} Batch{% else %}Student{% endif %} Records | LAKSHYA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/batch-students.css') }}">
+</head>
+<body class="cohort-page">
+    <!--
+    THESIS: A batch is a navigable student list, not another management table.
+    OWN-WORLD: Lakshya navy, white operational surfaces, blue state accents, compact data typography.
+    STORY: Confirm batch context, understand composition, refine the roster, open a student profile.
+    FIRST VIEWPORT: Context header, six summary facts, filter action, then the read-only student table.
+    FORM: Read-only batch workspace extending the established dashboard world; precisely specified structure.
+    FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+    -->
+    <header class="cohort-header">
+        <a class="cohort-brand" href="{{ url_for('user_dashboard.dashboard') }}"><span><i class="fas fa-rocket"></i></span><strong>LAKSHYA</strong></a>
+        <div class="cohort-header__actions"><span>{{ role }}</span><a href="{{ url_for('user_dashboard.dashboard') }}"><i class="fas fa-arrow-left"></i> Dashboard</a></div>
+    </header>
+
+    <main class="cohort-main">
+        <nav class="cohort-breadcrumb" aria-label="Breadcrumb"><a href="{{ url_for('user_dashboard.dashboard') }}">Dashboard</a><i class="fas fa-chevron-right"></i><span>{% if batch_year %}{{ batch_year }}-{{ ((batch_year + 1)|string)[-2:] }} batch{% else %}Student records{% endif %}</span></nav>
+
+        <section class="cohort-intro">
+            <div><h1>{% if batch_year %}Batch Student Records{% else %}Student Records{% endif %}</h1><p>{% if batch_year %}{{ batch_year }}-{{ ((batch_year + 1)|string)[-2:] }} batch{% elif filters.year %}{{ filters.year }}-{{ ((filters.year|int + 1)|string)[-2:] }} batch{% else %}All batches{% endif %}{% if filters.plant_location %} · {{ filters.plant_location.replace('_', ' ') }}{% endif %}</p></div>
+            <button id="cohortFilterOpen" class="cohort-filter-open" type="button" aria-controls="cohortFilters" aria-expanded="false"><i class="fas fa-sliders-h"></i> Filter records</button>
+        </section>
+
+        <section class="cohort-summary" aria-label="Filtered student summary">
+            <div><span>Total students</span><strong>{{ summary.total }}</strong></div>
+            <div><span>Male</span><strong>{{ summary.male }}</strong></div>
+            <div><span>Female</span><strong>{{ summary.female }}</strong></div>
+            <div><span>Active</span><strong>{{ summary.active }}</strong></div>
+            <div><span>Completed</span><strong>{{ summary.completed }}</strong></div>
+            <div><span>Dropped</span><strong>{{ summary.dropped }}</strong></div>
+        </section>
+
+        <section class="cohort-roster">
+            <div class="cohort-roster__heading"><div><h2>{% if batch_year %}Batch student list{% else %}Student list{% endif %}</h2><p>{{ summary.total }} records match the current filters</p></div><label><i class="fas fa-search"></i><input id="cohortQuickSearch" type="search" placeholder="Quick search visible records" aria-label="Quick search visible student records"></label></div>
+            <div class="cohort-table-wrap">
+                <table class="cohort-table">
+                    <thead><tr><th>Sr No</th><th>Student</th><th>Status</th><th>Plant</th><th>Branch</th><th>Department</th><th>Gender</th><th>Batch No</th><th>Profile</th></tr></thead>
+                    <tbody id="cohortRows">
+                    {% for student in students %}
+                    <tr data-cohort-search="{{ student.employee_name }} {{ student.ticket_no }} {{ student.plant_location }} {{ student.diploma_branch }}">
+                        <td>{{ loop.index }}</td>
+                        <td><span class="cohort-avatar">{{ student.employee_name[0]|upper }}</span><span><strong>{{ student.employee_name }}</strong><small>{{ student.ticket_no or 'No ticket number' }}</small></span></td>
+                        <td><span class="cohort-status cohort-status--{{ student.status or 'active' }}">{{ student.status or 'active' }}</span></td>
+                        <td>{{ (student.plant_location or 'Unknown').replace('_', ' ') }}</td><td>{{ student.diploma_branch or 'Unknown' }}</td><td>{{ student.department or '—' }}</td><td>{{ student.gender or '—' }}</td><td>{{ student.batch_no or '—' }}</td>
+                        <td>{% if can_view_profiles %}<a class="cohort-profile-link" href="{{ url_for('evaluations.student_progress_profile', student_id=student.id) }}">View profile <i class="fas fa-arrow-right"></i></a>{% else %}<span class="cohort-profile-unavailable">Read only</span>{% endif %}</td>
+                    </tr>
+                    {% else %}<tr><td colspan="9" class="cohort-empty"><i class="fas fa-users-slash"></i><strong>No students found</strong><span>Change or reset the filters to see more records.</span></td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <button id="cohortFilterBackdrop" class="cohort-filter-backdrop" type="button" aria-label="Close filters"></button>
+    <aside id="cohortFilters" class="cohort-filters" aria-hidden="true" aria-label="Student filters">
+        <div class="cohort-filters__header"><div><h2>Filter student records</h2><p>{% if batch_year %}Batch {{ batch_year }}-{{ ((batch_year + 1)|string)[-2:] }} remains fixed{% else %}Refine the plant records{% endif %}</p></div><button id="cohortFilterClose" type="button" aria-label="Close filters"><i class="fas fa-times"></i></button></div>
+        <form method="GET" action="{% if batch_year %}{{ url_for('user_dashboard.batch_students', batch_year=batch_year) }}{% else %}{{ url_for('user_dashboard.dashboard_student_records') }}{% endif %}">
+            <label>Student name<input type="search" name="employee_name" value="{{ filters.employee_name or '' }}" placeholder="Search full name"></label>
+            <label>Ticket number<input type="search" name="ticket_no" value="{{ filters.ticket_no or '' }}" placeholder="Search ticket"></label>
+            {% if not batch_year %}<label>Batch year<select name="year"><option value="">All batches</option>{% for item in options.years %}<option value="{{ item }}" {% if filters.year|string == item|string %}selected{% endif %}>{{ item }}-{{ ((item + 1)|string)[-2:] }}</option>{% endfor %}</select></label>{% endif %}
+            <label>Plant<select name="plant_location" {% if role in ['SDC Coordinator', 'HR Head'] %}disabled{% endif %}><option value="">All plants</option>{% for item in options.locations %}<option value="{{ item }}" {% if filters.plant_location == item %}selected{% endif %}>{{ item.replace('_', ' ') }}</option>{% endfor %}</select>{% if role in ['SDC Coordinator', 'HR Head'] %}<input type="hidden" name="plant_location" value="{{ filters.plant_location }}">{% endif %}</label>
+            <label>Diploma branch<select name="branch"><option value="">All branches</option>{% for item in options.branches %}<option value="{{ item }}" {% if filters.branch == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></label>
+            <label>Gender<select name="gender"><option value="">All genders</option>{% for item in ['Male','Female'] %}<option value="{{ item }}" {% if filters.gender == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></label>
+            <label>Status<select name="student_status">{% for item, label in [('', 'All students'), ('active','Active students'), ('completed','Completed students'), ('dropped','Dropped students')] %}<option value="{{ item }}" {% if (filters.student_status or '') == item %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+            <label>Department<select name="department"><option value="">All departments</option>{% for item in options.departments %}<option value="{{ item }}" {% if filters.department == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></label>
+            <label>Function<select name="function"><option value="">All functions</option>{% for item in options.functions %}<option value="{{ item }}" {% if filters.function == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></label>
+            <div class="cohort-filter-actions"><a href="{% if batch_year %}{{ url_for('user_dashboard.batch_students', batch_year=batch_year) }}{% else %}{{ url_for('user_dashboard.dashboard_student_records') }}{% endif %}">Reset</a><button type="submit">Apply filters</button></div>
+        </form>
+    </aside>
+    <script src="{{ url_for('static', filename='js/pages/batch-students.js') }}"></script>
+</body>
+</html>

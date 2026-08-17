@@ -2,8 +2,18 @@
             
             <div class="flex-1 p-3 md:p-6" style="padding: clamp(0.75rem, 2vw, 1.5rem);">
                 
-                <div class="grid grid-cols-1 xl:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
-                    
+                <div class="dashboard-overview-row mb-4 md:mb-6">
+                    <section class="corp-card dashboard-summary-panel dashboard-animate-section" aria-label="Student summary">
+                        <div class="dashboard-summary-heading"><h2>Student Summary</h2><p>Current records for the selected dashboard filters</p></div>
+                        <div class="dashboard-summary-grid">
+                            <a class="dashboard-summary-stat dashboard-summary-stat--total" href="{{ url_for('user_dashboard.dashboard_student_records', student_status='') }}" aria-label="View all student records"><span><i class="fas fa-users"></i>All Students</span><strong>{{ overview_stats.total }}</strong><small>Includes every status</small></a>
+                            <a class="dashboard-summary-stat dashboard-summary-stat--active" href="{{ url_for('user_dashboard.dashboard_student_records', student_status='active') }}" aria-label="View active student records"><span><i class="fas fa-user-check"></i>Active Students</span><strong>{{ overview_stats.active }}</strong><small>Currently in training</small></a>
+                            <a class="dashboard-summary-stat dashboard-summary-stat--dropped" href="{{ url_for('user_dashboard.dashboard_student_records', student_status='dropped') }}" aria-label="View dropped student records"><span><i class="fas fa-user-minus"></i>Dropped Students</span><strong>{{ overview_stats.dropped }}</strong><small>Available in filters</small></a>
+                            <a class="dashboard-summary-stat dashboard-summary-stat--male" href="{{ url_for('user_dashboard.dashboard_student_records', student_status='active', gender='Male') }}" aria-label="View active male student records"><span><i class="fas fa-mars"></i>Active Male</span><strong>{{ overview_stats.male }}</strong><small>Current active records</small></a>
+                            <a class="dashboard-summary-stat dashboard-summary-stat--female" href="{{ url_for('user_dashboard.dashboard_student_records', student_status='active', gender='Female') }}" aria-label="View active female student records"><span><i class="fas fa-venus"></i>Active Female</span><strong>{{ overview_stats.female }}</strong><small>Current active records</small></a>
+                        </div>
+                    </section>
+
                     <div class="corp-card dashboard-animate-section dashboard-top-card p-4 flex flex-col">
                         <div class="flex justify-between items-center mb-2">
                             <h3 class="text-xs md:text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2">
@@ -17,148 +27,55 @@
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="corp-card dashboard-kpi-card dashboard-kpi-card--students dashboard-animate-section dashboard-top-card p-0 flex flex-col overflow-hidden border-t-4 border-indigo-500">
-                        <div class="p-3 bg-gradient-to-r from-indigo-50 to-white border-b border-slate-100 flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-base flex-shrink-0 shadow-sm">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div class="flex items-baseline gap-2 flex-wrap">
-                                <span class="text-[10px] md:text-xs font-bold text-indigo-500 uppercase tracking-wider">Total Students</span>
-                            </div>
-                        </div>
-                        <div class="flex-1 overflow-x-auto">
-                            <table class="min-w-full text-[11px] md:text-sm">
-                                <thead class="bg-slate-50 border-b border-slate-200">
-                                    <tr>
-                                        <th class="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">Plant</th>
-                                        <th class="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">Count</th>
-                                        <th class="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">Diversity</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-100">
-                                    {% for loc in location_stats %}
-                                    <tr class="h-11 hover:bg-slate-50/70 transition-colors">
-                                        <td class="px-3 py-2 font-medium text-slate-700">{{ loc.location.replace('_', ' ') }}</td>
-                                        <td class="px-3 py-2 text-center font-semibold text-slate-900 tabular-nums"><span data-kpi-value>{{ loc.total }}</span></td>
-                                        <td class="px-3 py-2 text-center">
-                                            <div class="flex flex-col items-center gap-0.5 justify-center">
-                                                <div class="flex items-center gap-1 text-xs font-semibold tabular-nums">
-                                                    <span class="text-blue-600">{{ loc.male_pct }}%</span>
-                                                    <span class="text-slate-300">/</span>
-                                                    <span class="text-pink-500">{{ loc.female_pct }}%</span>
-                                                </div>
-                                                <div class="w-16 md:w-20 h-1 bg-slate-200/80 rounded-full overflow-hidden flex">
-                                                    <div class="bg-blue-500 h-full" style="width: {{ loc.male_pct }}%"></div>
-                                                    <div class="bg-pink-500 h-full" style="width: {{ loc.female_pct }}%"></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% else %}
-                                    <tr><td colspan="3" class="text-center py-8 text-slate-400 italic text-xs">No location data</td></tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                <div class="dashboard-plant-row-layout dashboard-section-row">
+
+                    <div class="corp-card dashboard-plant-card dashboard-animate-section dashboard-top-card">
+                        <div class="dashboard-plant-heading"><div><h2>Students by Plant</h2><p>Active student population and gender distribution</p></div><span>{{ stats.total }} total</span></div>
+                        <div class="dashboard-plant-ranking">
+                            {% for loc in location_stats %}
+                            <a class="dashboard-plant-row" href="{{ url_for('user_dashboard.dashboard_student_records', plant_location=loc.location, student_status='active') }}" aria-label="View active students at {{ loc.location.replace('_', ' ') }}">
+                                <div class="dashboard-plant-label"><strong>{{ loc.location.replace('_', ' ') }}</strong><span>{{ loc.total }}</span></div>
+                                <div class="dashboard-plant-track" title="{{ loc.total }} active students"><span style="width: {{ (loc.total / (stats.total or 1) * 100)|round(1) }}%"><i style="width: {{ loc.male_pct }}%"></i><i style="width: {{ loc.female_pct }}%"></i></span></div>
+                                <div class="dashboard-plant-mix"><span>{{ loc.male_pct }}% M</span><span>{{ loc.female_pct }}% F</span></div>
+                            </a>
+                            {% else %}<p class="dashboard-top-empty">No plant data for these filters.</p>{% endfor %}
                         </div>
                     </div>
 
-                    <div class="corp-card dashboard-kpi-card dashboard-kpi-card--attrition dashboard-animate-section dashboard-top-card p-0 flex flex-col overflow-hidden border-t-4 border-red-500">
-                        <div class="p-3 bg-gradient-to-r from-red-50 to-white border-b border-slate-100 flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-base flex-shrink-0 shadow-sm">
-                                <i class="fas fa-user-minus"></i>
-                            </div>
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-[10px] md:text-xs font-bold text-red-500 uppercase tracking-wider">Attrition</span>
-                                <span class="text-xs md:text-sm font-semibold text-slate-500">Plant Wise</span>
-                            </div>
-                        </div>
-                        <div class="flex-1 overflow-x-auto">
-                            <table class="min-w-full text-[11px] md:text-sm">
-                                <thead class="bg-slate-50 border-b border-slate-200">
-                                    <tr>
-                                        <th class="px-3 py-2 text-left text-[10px] font-semibold text-slate-500 uppercase">Plant</th>
-                                        <th class="px-3 py-2 text-center text-[10px] font-semibold text-slate-500 uppercase">Attrition %</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-100">
-                                    {% for row in attrition_data %}
-                                    <tr class="h-11 hover:bg-slate-50 transition-colors">
-                                        <td class="px-3 py-2 font-medium text-slate-700">{{ row.location.replace('_', ' ') }}</td>
-                                        <td class="px-3 py-2 text-center">
-                                            <div class="flex flex-col items-center gap-0.5 justify-center">
-                                                <span class="font-bold text-red-600 text-sm" data-kpi-value>{{ row.attrition_pct }}%</span>
-                                                <div class="w-16 md:w-20 h-1 bg-slate-200 rounded-full overflow-hidden">
-                                                    <div class="bg-red-500 h-full" style="width: {{ row.attrition_pct }}%"></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% else %}
-                                    <tr><td colspan="2" class="text-center py-8 text-slate-400 italic text-xs">No attrition data</td></tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                    <div class="corp-card dashboard-attrition-card dashboard-animate-section dashboard-top-card">
+                        <div class="dashboard-plant-heading"><div><h2>Attrition by Plant</h2><p>Highest percentage shown first</p></div></div>
+                        <div class="dashboard-attrition-list">
+                            {% for row in attrition_data|sort(attribute='attrition_pct', reverse=true) %}
+                            <a class="dashboard-attrition-row {% if row.attrition_pct == 0 %}is-zero{% endif %}" href="{{ url_for('user_dashboard.dashboard_student_records', plant_location=row.location, student_status='dropped') }}" aria-label="View dropped students at {{ row.location.replace('_', ' ') }}"><span>{{ row.location.replace('_', ' ') }}</span><div><i style="width: {{ [row.attrition_pct * 10, 100]|min }}%"></i></div><strong>{{ row.attrition_pct }}%</strong></a>
+                            {% else %}<p class="dashboard-top-empty">No attrition data.</p>{% endfor %}
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-3 md:gap-4 mb-2 md:mb-3">
-                    <div class="corp-card dashboard-kpi-card dashboard-kpi-card--batches dashboard-animate-section p-0 flex flex-col overflow-hidden border-t-4 border-emerald-500">
-                        <div class="p-2 md:p-4 bg-gradient-to-r from-emerald-50 to-white border-b border-slate-100">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-[9px] md:text-xs font-bold text-emerald-500 uppercase tracking-wide">Active Batches</p>
-                                    <h2 class="text-xl md:text-3xl font-extrabold text-slate-800 mt-0.5" data-kpi-value>{{ stats.batches }}</h2>
-                                </div>
-                                <div class="w-8 h-8 md:w-11 md:h-11 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-base md:text-xl">
-                                    <i class="fas fa-layer-group"></i>
-                                </div>
+                <div class="dashboard-section-row grid grid-cols-1 gap-3 md:gap-4 mb-2 md:mb-3">
+                    <div class="corp-card dashboard-kpi-card dashboard-kpi-card--batches dashboard-batch-footprint dashboard-animate-section p-0 flex flex-col overflow-hidden">
+                        <div class="dashboard-batch-heading">
+                            <div><div class="dashboard-batch-title-line"><h2>Active Batches</h2><span id="batchVisibleCount" class="dashboard-batch-count">{{ stats.batches }} batches</span></div><p>Student count by joining year and plant</p></div>
+                            <div class="dashboard-batch-filter"><label for="batchHistoryFilter">Show batch</label><select id="batchHistoryFilter"><option value="active">Active batches</option>{% for year in batch_history_stats.years %}<option value="{{ year }}">{{ year }}-{{ ((year + 1)|string)[-2:] }}</option>{% endfor %}<option value="all">All records</option></select></div>
+                        </div>
+                        <div class="dashboard-batch-board">
+                            {% for year in batch_history_stats.years %}
+                            {% set active_year_data = batch_stats.data.get(year, {}) %}
+                            <div class="dashboard-batch-lane batch-lane" data-batch-year="{{ year }}" data-cycle-ended="{{ 'true' if current_academic_year >= year + 5 else 'false' }}">
+                                {% set active_total = active_year_data.get('_total', 0) %}
+                                <a class="dashboard-batch-year" href="{{ url_for('user_dashboard.batch_students', batch_year=year, student_status='active') }}"><strong>{{ year }}-{{ ((year + 1)|string)[-2:] }}</strong><span>{{ active_total }} active {{ 'student' if active_total == 1 else 'students' }}</span></a>
+                                <div class="dashboard-batch-plants">{% for loc in batch_history_stats.locations %}{% set amount = active_year_data.get(loc, 0) %}{% if amount %}<a href="{{ url_for('user_dashboard.batch_students', batch_year=year, plant_location=loc, student_status='active') }}"><b>{{ amount }}</b>{{ loc.replace('_', ' ') }}</a>{% endif %}{% endfor %}</div>
                             </div>
+                            {% else %}<p class="dashboard-batch-empty">No batch data.</p>{% endfor %}
                         </div>
-                        <div class="flex-1 overflow-x-auto">
-                            <table class="min-w-full text-[10px] md:text-sm border-collapse">
-                                <thead>
-                                    <tr class="bg-slate-100 border-b border-slate-200">
-                                        <th class="px-2 md:px-3 py-1.5 md:py-2 text-left text-[9px] md:text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap">Batch Year</th>
-                                        {% for loc in batch_stats.locations %}
-                                        <th class="px-2 md:px-3 py-1.5 md:py-2 text-center text-[9px] md:text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap">
-                                            {{ loc.replace('_', ' ') }}
-                                        </th>
-                                        {% endfor %}
-                                        {% if batch_stats.locations|length > 1 %}
-                                        <th class="px-2 md:px-3 py-1.5 md:py-2 text-center text-[9px] md:text-xs font-bold text-emerald-700 uppercase tracking-wide whitespace-nowrap bg-emerald-50">Total</th>
-                                        {% endif %}
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white">
-                                    {% for year in batch_stats.years %}
-                                    <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                                        <td class="px-2 md:px-3 py-1.5 md:py-2 font-bold text-slate-800 tabular-nums">
-                                            {{ year }}-{{ ((year + 1)|string)[-2:] }}
-                                        </td>
-                                        {% for loc in batch_stats.locations %}
-                                        <td class="px-2 md:px-3 py-1.5 md:py-2 text-center text-slate-600 tabular-nums">
-                                            {{ batch_stats.data[year].get(loc, 0) }}
-                                        </td>
-                                        {% endfor %}
-                                        {% if batch_stats.locations|length > 1 %}
-                                        <td class="px-2 md:px-3 py-1.5 md:py-2 text-center bg-emerald-50/50 font-bold text-emerald-700 tabular-nums">
-                                            {{ batch_stats.data[year].get('_total', 0) }}
-                                        </td>
-                                        {% endif %}
-                                    </tr>
-                                    {% else %}
-                                    <tr><td colspan="{{ batch_stats.locations|length + (2 if batch_stats.locations|length > 1 else 1) }}" class="text-center py-6 text-slate-400 italic text-[10px]">No batch data</td></tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
+                        <p id="batchHistoryEmpty" class="dashboard-batch-empty" hidden>No records are available for this batch year.</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-3 md:gap-4 mb-2 md:mb-3">
-                    <div class="corp-card dashboard-kpi-card dashboard-kpi-card--branches dashboard-animate-section p-0 flex flex-col overflow-hidden border-t-4 border-cyan-500 shadow-md shadow-cyan-100/40">
+                <div class="dashboard-section-row grid grid-cols-1 gap-3 md:gap-4 mb-2 md:mb-3">
+                    <div class="corp-card dashboard-kpi-card dashboard-kpi-card--branches dashboard-branch-map dashboard-animate-section p-0 flex flex-col overflow-hidden border-t-4 border-cyan-500 shadow-md shadow-cyan-100/40">
                         <div class="p-2 md:p-4 bg-gradient-to-r from-cyan-100 via-cyan-50 to-white border-b border-cyan-100">
                             <div class="flex items-center justify-between">
                                 <div>
@@ -171,7 +88,7 @@
                             </div>
                         </div>
                         <div class="flex-1 overflow-x-auto">
-                            <table class="min-w-full text-[10px] md:text-sm border-collapse">
+                            <table class="dashboard-branch-heatmap min-w-full text-[10px] md:text-sm">
                                 <thead>
                                     <tr class="bg-gradient-to-r from-slate-100 to-slate-50 border-b border-slate-200">
                                         <th class="px-2 md:px-3 py-1.5 md:py-2 text-left text-[9px] md:text-xs font-extrabold text-slate-700 uppercase tracking-wider whitespace-nowrap">Diploma Branch</th>
@@ -188,10 +105,11 @@
                                     <tr class="border-b border-slate-100 hover:bg-cyan-50/40 transition-all duration-200">
                                         <td class="px-2 md:px-3 py-1.5 md:py-2 font-bold text-slate-900 tabular-nums whitespace-nowrap">{{ branch }}</td>
                                         {% for loc in branch_stats.locations %}
-                                        <td class="px-2 md:px-3 py-1.5 md:py-2 text-center text-slate-700 font-semibold tabular-nums">{{ branch_stats.data[branch].get(loc, 0) }}</td>
+                                        {% set branch_count = branch_stats.data[branch].get(loc, 0) %}
+                                        <td class="dashboard-branch-cell px-2 md:px-3 py-1.5 md:py-2 text-center text-slate-700 font-semibold tabular-nums" data-count="{{ branch_count }}">{{ branch_count }}</td>
                                         {% endfor %}
                                         {% if branch_stats.locations|length > 1 %}
-                                        <td class="px-2 md:px-3 py-1.5 md:py-2 text-center bg-cyan-50 font-extrabold text-cyan-800 tabular-nums border-l border-cyan-100">{{ branch_stats.data[branch].get('_total', 0) }}</td>
+                                        <td class="dashboard-branch-total px-2 md:px-3 py-1.5 md:py-2 text-center font-extrabold tabular-nums">{{ branch_stats.data[branch].get('_total', 0) }}</td>
                                         {% endif %}
                                     </tr>
                                     {% else %}
@@ -203,7 +121,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-3 md:gap-4 mb-2 md:mb-3">
+                <div class="dashboard-section-row grid grid-cols-1 gap-3 md:gap-4 mb-2 md:mb-3">
                     <div class="corp-card dashboard-animate-section p-0 flex flex-col overflow-hidden border-t-4 border-emerald-500 shadow-md" data-dashboard-section="evaluation-chart">
                         
                         <div class="p-3 md:p-4 bg-gradient-to-r from-emerald-50 to-white border-b border-slate-100">
@@ -296,70 +214,23 @@
                     </div>
                 </div>
 
-                <div class="student-record-toggle-wrap mb-4">
-                    <button id="toggleTableBtn" onclick="toggleStudentTable()" class="w-full bg-white hover:bg-slate-50 text-slate-700 py-2.5 md:py-3 rounded-lg font-bold text-xs md:text-sm shadow-sm border transition flex items-center justify-center gap-2">
-                        <i class="fas fa-chevron-down" id="toggleTableIcon"></i>
-                        <span id="toggleTableText">Show Student Records</span>
-                    </button>
-                </div>
-
-                <div id="studentTableContainer" class="hidden corp-card dashboard-animate-section overflow-hidden">
-                     <div class="overflow-x-auto">
-                         <table class="min-w-full divide-y divide-slate-100">
-                            <thead class="bg-slate-50 border-b border-slate-200">
-                                <tr>
-                                    <th class="px-3 md:px-4 py-2.5 text-left text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider">Profile</th>
-                                    <th class="px-3 md:px-4 py-2.5 text-left text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider">Semester</th>
-                                    <th class="px-3 md:px-4 py-2.5 text-left text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Location</th>
-                                    <th class="px-3 md:px-4 py-2.5 text-left text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Department</th>
-                                    <th class="px-3 md:px-4 py-2.5 text-center text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider bg-amber-50">Training(20)</th>
-                                    <th class="px-3 md:px-4 py-2.5 text-center text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider bg-purple-50">BITS CGPA(30)</th>
-                                    <th class="px-3 md:px-4 py-2.5 text-center text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider bg-blue-50">OJT(50)</th>
-                                    <th class="px-3 md:px-4 py-2.5 text-center text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-100">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-slate-100">
-                                {% for student in students %}
-                                <tr class="hover:bg-slate-50 transition-colors group">
-                                    <td class="px-3 md:px-4 py-2.5 whitespace-nowrap">
-                                        <a href="{{ url_for('evaluations.student_progress_profile', student_id=student.id) }}" class="flex items-center cursor-pointer group" aria-label="View {{ student.employee_name }} profile">
-                                            <div class="flex-shrink-0 h-8 w-8 md:h-9 md:w-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-[11px] md:text-xs shadow-md group-hover:shadow-lg transition-shadow">
-                                                {{ student.employee_name[0]|upper }}
-                                            </div>
-                                            <div class="ml-2 md:ml-3">
-                                                <div class="text-[11px] md:text-sm font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">{{ student.employee_name }}</div>
-                                                <div class="text-[10px] md:text-xs text-slate-400 font-medium uppercase hidden sm:block">{{ student.gender }}</div>
-                                            </div>
-                                        </a>
-                                    </td>
-                                    <td class="px-3 md:px-4 py-2.5 whitespace-nowrap">
-                                        <div class="text-[11px] md:text-sm font-bold text-slate-800">Sem {{ student.semester or '-' }}</div>
-                                        <div class="text-[10px] md:text-xs text-slate-500 capitalize">{{ student.semester_status or 'N/A' }}</div>
-                                    </td>
-                                    <td class="px-3 md:px-4 py-2.5 whitespace-nowrap text-[11px] md:text-sm text-slate-600 hidden md:table-cell">{{ (student.plant_location or '').replace('_', ' ') }}</td>
-                                    <td class="px-3 md:px-4 py-2.5 whitespace-nowrap text-[11px] md:text-sm text-slate-600 font-medium hidden lg:table-cell">{{ student.department or '-' }}</td>
-                                    
-                                    <td class="px-2 md:px-3 py-2.5 whitespace-nowrap text-center bg-amber-50/50 group-hover:bg-amber-50 transition-colors">
-                                        <span class="text-[11px] md:text-sm font-bold text-amber-700">{{ student.final_eval.training_total | round(1)}}</span>
-                                    </td>
-                                    <td class="px-2 md:px-3 py-2.5 whitespace-nowrap text-center bg-purple-50/50 group-hover:bg-purple-50 transition-colors">
-                                        <span class="text-[11px] md:text-sm font-bold text-purple-700">{{ student.final_eval.bits_total | round(2)  }}</span>
-                                    </td>
-                                    <td class="px-2 md:px-3 py-2.5 whitespace-nowrap text-center bg-blue-50/50 group-hover:bg-blue-50 transition-colors">
-                                        <span class="text-[11px] md:text-sm font-bold text-blue-700">{{ student.final_eval.ojt_total | round(1) }}</span>
-                                    </td>
-                                    <td class="px-2 md:px-3 py-2.5 whitespace-nowrap text-center bg-slate-50 group-hover:bg-slate-100 transition-colors">
-                                        <span class="text-xs md:text-base font-extrabold text-slate-900">{{ student.final_eval.grand_total | round(1) }}</span>
-                                    </td>
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <td colspan="8" class="text-center py-10 text-slate-500">
-                                        <i class="fas fa-filter text-2xl mb-2 text-slate-300"></i>
-                                        <p>No records found matching your filters.</p>
-                                    </td>
-                                </tr>
-                                {% endfor %}
+                <div class="corp-card dashboard-student-explorer dashboard-animate-section overflow-hidden">
+                    <div class="dashboard-student-heading">
+                        <div><h2>Student Explorer</h2><p>Open any student to view the complete progress profile</p></div>
+                        <label class="dashboard-student-search"><i class="fas fa-search"></i><input id="dashboardStudentSearch" type="search" placeholder="Find by name, ticket or plant" aria-label="Search student records"></label>
+                    </div>
+                    <div class="dashboard-student-table-wrap">
+                        <table class="dashboard-student-table">
+                            <thead><tr><th>Student</th><th>Semester</th><th>Plant</th><th>Department</th><th>Training</th><th>BITS</th><th>OJT</th><th>Total</th></tr></thead>
+                            <tbody id="dashboardStudentRows">
+                            {% for student in students %}
+                            <tr data-student-search="{{ student.employee_name }} {{ student.ticket_no }} {{ student.plant_location }}">
+                                <td><a href="{{ url_for('evaluations.student_progress_profile', student_id=student.id) }}"><span class="dashboard-student-avatar">{{ student.employee_name[0]|upper }}</span><span><strong>{{ student.employee_name }}</strong><small>{{ student.ticket_no or student.gender }}</small></span></a></td>
+                                <td><strong>Sem {{ student.semester or '-' }}</strong><small>{{ student.semester_status or 'N/A' }}</small></td>
+                                <td>{{ (student.plant_location or '').replace('_', ' ') }}</td><td>{{ student.department or '-' }}</td>
+                                <td>{{ student.final_eval.training_total|round(1) }}</td><td>{{ student.final_eval.bits_total|round(2) }}</td><td>{{ student.final_eval.ojt_total|round(1) }}</td><td><strong>{{ student.final_eval.grand_total|round(1) }}</strong></td>
+                            </tr>
+                            {% else %}<tr><td colspan="8" class="dashboard-student-empty">No students match these filters.</td></tr>{% endfor %}
                             </tbody>
                         </table>
                     </div>

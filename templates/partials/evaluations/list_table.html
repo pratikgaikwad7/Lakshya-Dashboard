@@ -7,15 +7,16 @@
                         <table class="evaluation-data-grid min-w-full">
                             <thead>
                                 <tr>
+                                    <th class="evaluation-row-number text-center" scope="col">Sr. No.</th>
                                     <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student Profile</th>
                                     <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Semester</th>
                                     <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Location</th>
                                     <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Department</th>
                                     <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">BITS Stream</th>
                                     <th class="px-4 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-amber-50">Training (20)</th>
-                                    <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-purple-50">BITS CGPA (30)</th>
-                                    <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-blue-50">OJT (50)</th>
+                                    <th class="px-3 py-3 text-center text-[10px] font-bold text-amber-700 uppercase tracking-wider bg-amber-50">Training (20)</th>
+                                    <th class="px-3 py-3 text-center text-[10px] font-bold text-purple-700 uppercase tracking-wider bg-purple-50">BITS CGPA (30)</th>
+                                    <th class="px-3 py-3 text-center text-[10px] font-bold text-sky-700 uppercase tracking-wider bg-blue-50">OJT (50)</th>
                                     <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-100">Total</th>
                                     <th class="px-4 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Action</th>
                                 </tr>
@@ -23,6 +24,7 @@
                             <tbody>
                                 {% for student in students %}
                                 <tr class="evaluation-data-row transition-colors group">
+                                    <td class="evaluation-row-number text-center" aria-label="Serial number {{ loop.index }}">{{ loop.index }}</td>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <a href="{{ url_for('evaluations.student_progress_profile', student_id=student.id) }}" class="flex items-center cursor-pointer group">
                                             <div class="evaluation-student-avatar flex-shrink-0 flex items-center justify-center text-white font-bold text-xs transition-shadow">
@@ -65,7 +67,7 @@
                                                 </span>
                                             {% elif student.semester_status == 'ongoing' %}
                                                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-yellow-50 text-yellow-700 border border-yellow-100">
-                                                    <i class="fas fa-spinner fa-spin mr-1 mt-0.5"></i> Ongoing
+                                                    <i class="fas fa-clock mr-1 mt-0.5"></i> Ongoing
                                                 </span>
                                             {% else %}
                                                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-slate-50 text-slate-500 border border-slate-100">
@@ -100,7 +102,7 @@
                                             </button>
                                         {% else %}
                                             <a href="/evaluations/{{ student.id }}{% if student.semester %}?semester={{ student.semester }}{% endif %}" 
-                                               class="evaluation-row-action inline-flex items-center text-white text-xs font-bold transition">
+                                               class="evaluation-row-action inline-flex items-center text-white text-xs font-bold">
                                                 <i class="fas fa-edit mr-1.5"></i> Evaluate
                                             </a>
                                         {% endif %}
@@ -108,7 +110,7 @@
                                 </tr>
                                 {% else %}
                                 <tr>
-                                    <td colspan="11" class="text-center py-10 text-slate-500">
+                                    <td colspan="12" class="text-center py-10 text-slate-500">
                                         <i class="fas fa-filter text-2xl mb-2 text-slate-300"></i>
                                         <p>No records found matching your filters.</p>
                                     </td>
