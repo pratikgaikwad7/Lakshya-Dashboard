@@ -8,8 +8,9 @@
                         <div class="dashboard-summary-grid">
                             <a class="dashboard-summary-stat dashboard-summary-stat--total" href="{{ url_for('user_dashboard.dashboard_student_records', student_status='') }}" aria-label="View all student records"><span><i class="fas fa-users"></i>All Students</span><strong>{{ overview_stats.total }}</strong><small>Includes every status</small></a>
                             <a class="dashboard-summary-stat dashboard-summary-stat--active" href="{{ url_for('user_dashboard.dashboard_student_records', student_status='active') }}" aria-label="View active student records"><span><i class="fas fa-user-check"></i>Active Students</span><strong>{{ overview_stats.active }}</strong><small>Currently in training</small></a>
-                            <a class="dashboard-summary-stat dashboard-summary-stat--dropped" href="{{ url_for('user_dashboard.dashboard_student_records', student_status='dropped') }}" aria-label="View dropped student records"><span><i class="fas fa-user-minus"></i>Dropped Students</span><strong>{{ overview_stats.dropped }}</strong><small>Available in filters</small></a>
                             <a class="dashboard-summary-stat dashboard-summary-stat--male" href="{{ url_for('user_dashboard.dashboard_student_records', student_status='active', gender='Male') }}" aria-label="View active male student records"><span><i class="fas fa-mars"></i>Active Male</span><strong>{{ overview_stats.male }}</strong><small>Current active records</small></a>
+                            <a class="dashboard-summary-stat dashboard-summary-stat--batches" href="#activeBatches" aria-label="Go to active batches"><span><i class="fas fa-layer-group"></i>Active Batches</span><strong>{{ stats.batches }}</strong><small>Current five-year cycles</small></a>
+                            <a class="dashboard-summary-stat dashboard-summary-stat--dropped" href="{{ url_for('user_dashboard.dashboard_student_records', student_status='dropped') }}" aria-label="View dropped student records"><span><i class="fas fa-user-minus"></i>Dropped Students</span><strong>{{ overview_stats.dropped }}</strong><small>Available in filters</small></a>
                             <a class="dashboard-summary-stat dashboard-summary-stat--female" href="{{ url_for('user_dashboard.dashboard_student_records', student_status='active', gender='Female') }}" aria-label="View active female student records"><span><i class="fas fa-venus"></i>Active Female</span><strong>{{ overview_stats.female }}</strong><small>Current active records</small></a>
                         </div>
                     </section>
@@ -45,16 +46,16 @@
                     </div>
 
                     <div class="corp-card dashboard-attrition-card dashboard-animate-section dashboard-top-card">
-                        <div class="dashboard-plant-heading"><div><h2>Attrition by Plant</h2><p>Highest percentage shown first</p></div></div>
+                        <div class="dashboard-plant-heading"><div><h2>Attrition by Plant</h2><p>Dropped students and attrition percentage</p></div><span>{{ overview_stats.dropped }} dropped</span></div>
                         <div class="dashboard-attrition-list">
                             {% for row in attrition_data|sort(attribute='attrition_pct', reverse=true) %}
-                            <a class="dashboard-attrition-row {% if row.attrition_pct == 0 %}is-zero{% endif %}" href="{{ url_for('user_dashboard.dashboard_student_records', plant_location=row.location, student_status='dropped') }}" aria-label="View dropped students at {{ row.location.replace('_', ' ') }}"><span>{{ row.location.replace('_', ' ') }}</span><div><i style="width: {{ [row.attrition_pct * 10, 100]|min }}%"></i></div><strong>{{ row.attrition_pct }}%</strong></a>
+                            <a class="dashboard-attrition-row {% if row.attrition_pct == 0 %}is-zero{% endif %}" href="{{ url_for('user_dashboard.dashboard_student_records', plant_location=row.location, student_status='dropped') }}" aria-label="View {{ row.dropped_count }} dropped students at {{ row.location.replace('_', ' ') }}"><span class="dashboard-attrition-label"><span>{{ row.location.replace('_', ' ') }}</span><b>{{ row.dropped_count }}</b></span><div><i style="width: {{ [row.attrition_pct * 10, 100]|min }}%"></i></div><strong>{{ row.attrition_pct }}%</strong></a>
                             {% else %}<p class="dashboard-top-empty">No attrition data.</p>{% endfor %}
                         </div>
                     </div>
                 </div>
 
-                <div class="dashboard-section-row grid grid-cols-1 gap-3 md:gap-4 mb-2 md:mb-3">
+                <div id="activeBatches" class="dashboard-section-row grid grid-cols-1 gap-3 md:gap-4 mb-2 md:mb-3">
                     <div class="corp-card dashboard-kpi-card dashboard-kpi-card--batches dashboard-batch-footprint dashboard-animate-section p-0 flex flex-col overflow-hidden">
                         <div class="dashboard-batch-heading">
                             <div><div class="dashboard-batch-title-line"><h2>Active Batches</h2><span id="batchVisibleCount" class="dashboard-batch-count">{{ stats.batches }} batches</span></div><p>Student count by joining year and plant</p></div>
@@ -93,7 +94,7 @@
                                     <tr class="bg-gradient-to-r from-slate-100 to-slate-50 border-b border-slate-200">
                                         <th class="px-2 md:px-3 py-1.5 md:py-2 text-left text-[9px] md:text-xs font-extrabold text-slate-700 uppercase tracking-wider whitespace-nowrap">Diploma Branch</th>
                                         {% for loc in branch_stats.locations %}
-                                        <th class="px-2 md:px-3 py-1.5 md:py-2 text-center text-[9px] md:text-xs font-extrabold text-slate-700 uppercase tracking-wider whitespace-nowrap">{{ loc.replace('_', ' ') }}</th>
+                                        <th class="px-2 md:px-3 py-1.5 md:py-2 text-center text-[9px] md:text-xs font-extrabold text-slate-700 uppercase tracking-wider whitespace-nowrap"><a class="dashboard-branch-axis-link" href="{{ url_for('user_dashboard.dashboard_student_records', plant_location=loc, student_status='active') }}" aria-label="View all active students at {{ loc.replace('_', ' ') }}">{{ loc.replace('_', ' ') }}</a></th>
                                         {% endfor %}
                                         {% if branch_stats.locations|length > 1 %}
                                         <th class="px-2 md:px-3 py-1.5 md:py-2 text-center text-[9px] md:text-xs font-extrabold text-cyan-800 uppercase tracking-wider whitespace-nowrap bg-cyan-100 border-l border-cyan-200">Total</th>
@@ -103,13 +104,13 @@
                                 <tbody class="bg-white">
                                     {% for branch in branch_stats.branches %}
                                     <tr class="border-b border-slate-100 hover:bg-cyan-50/40 transition-all duration-200">
-                                        <td class="px-2 md:px-3 py-1.5 md:py-2 font-bold text-slate-900 tabular-nums whitespace-nowrap">{{ branch }}</td>
+                                        <td class="px-2 md:px-3 py-1.5 md:py-2 font-bold text-slate-900 tabular-nums whitespace-nowrap"><a class="dashboard-branch-axis-link" href="{{ url_for('user_dashboard.dashboard_student_records', branch=branch, student_status='active') }}" aria-label="View active {{ branch }} students across all plants">{{ branch }}</a></td>
                                         {% for loc in branch_stats.locations %}
                                         {% set branch_count = branch_stats.data[branch].get(loc, 0) %}
-                                        <td class="dashboard-branch-cell px-2 md:px-3 py-1.5 md:py-2 text-center text-slate-700 font-semibold tabular-nums" data-count="{{ branch_count }}">{{ branch_count }}</td>
+                                        <td class="dashboard-branch-cell px-2 md:px-3 py-1.5 md:py-2 text-center text-slate-700 font-semibold tabular-nums" data-count="{{ branch_count }}">{% if branch_count %}<a class="dashboard-branch-count-link" href="{{ url_for('user_dashboard.dashboard_student_records', branch=branch, plant_location=loc, student_status='active') }}" aria-label="View {{ branch_count }} active {{ branch }} students at {{ loc.replace('_', ' ') }}">{{ branch_count }}</a>{% else %}<span>0</span>{% endif %}</td>
                                         {% endfor %}
                                         {% if branch_stats.locations|length > 1 %}
-                                        <td class="dashboard-branch-total px-2 md:px-3 py-1.5 md:py-2 text-center font-extrabold tabular-nums">{{ branch_stats.data[branch].get('_total', 0) }}</td>
+                                        <td class="dashboard-branch-total px-2 md:px-3 py-1.5 md:py-2 text-center font-extrabold tabular-nums"><a class="dashboard-branch-count-link" href="{{ url_for('user_dashboard.dashboard_student_records', branch=branch, student_status='active') }}" aria-label="View all {{ branch_stats.data[branch].get('_total', 0) }} active {{ branch }} students">{{ branch_stats.data[branch].get('_total', 0) }}</a></td>
                                         {% endif %}
                                     </tr>
                                     {% else %}

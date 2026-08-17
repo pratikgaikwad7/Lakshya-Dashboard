@@ -16,11 +16,11 @@
 
     <header class="profile-nav">
         <div class="profile-shell profile-nav__inner">
-            <a href="{{ url_for('evaluations.list_evaluations') }}" class="profile-back-link">
+            <a href="{% if can_manage_evaluations %}{{ url_for('evaluations.list_evaluations') }}{% else %}{{ url_for('user_dashboard.dashboard') }}{% endif %}" class="profile-back-link">
                 <span class="profile-back-link__icon"><i class="fas fa-arrow-left"></i></span>
-                <span>Evaluation workspace</span>
+                <span>{% if can_manage_evaluations %}Evaluation workspace{% else %}Dashboard{% endif %}</span>
             </a>
-            {% if summary.current_semester %}
+            {% if can_manage_evaluations and summary.current_semester %}
             <a href="{{ url_for('evaluations.evaluation_sheet', student_id=student.id, semester=summary.current_semester) }}" class="profile-primary-action">
                 <i class="fas fa-file-signature"></i>
                 Open evaluation
@@ -209,9 +209,13 @@
                     </div>
 
                     <footer class="semester-card__footer">
+                        {% if can_manage_evaluations %}
                         <a href="{{ url_for('evaluations.evaluation_sheet', student_id=student.id, semester=evaluation.semester) }}">
                             View evaluation sheet <i class="fas fa-arrow-right"></i>
                         </a>
+                        {% else %}
+                        <span><i class="fas fa-eye"></i> Read-only semester record</span>
+                        {% endif %}
                     </footer>
                 </article>
                 {% else %}

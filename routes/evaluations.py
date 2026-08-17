@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from flask import Blueprint, render_template, request, redirect, send_file
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 from exceptions import NotFoundError, ValidationError
 from extensions import limiter
@@ -137,7 +137,7 @@ def evaluation_sheet(student_id):
 
 
 @evaluations_bp.route('/evaluations/<int:student_id>/profile')
-@roles_required(*EVALUATION_MANAGEMENT_ROLES)
+@login_required
 def student_progress_profile(student_id):
     student = _authorize_student(student_id)
     evaluations = get_student_evaluation_history(student_id)
@@ -175,6 +175,7 @@ def student_progress_profile(student_id):
         student=student,
         evaluations=evaluations,
         summary=summary,
+        can_manage_evaluations=current_user.role in EVALUATION_MANAGEMENT_ROLES,
     )
 
 

@@ -2,6 +2,7 @@
 // STUDENT PROFILE MODAL
 // ---------------------------------------------------------
 function openStudentModal(student) {
+    document.getElementById('studentModal').classList.remove('is-evaluation-list');
     const modalBody = document.querySelector('#studentModal .flex-1.overflow-y-auto');
     if (studentModalOriginalContent) {
         modalBody.innerHTML = studentModalOriginalContent;
@@ -92,7 +93,9 @@ function setStudentModalSubtitle(department, ticketNumber) {
 }
 
 function closeStudentModal() {
-    document.getElementById('studentModal').classList.add('hidden');
+    const modal = document.getElementById('studentModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('is-evaluation-list');
     document.body.classList.remove('overflow-hidden');
 }
 
@@ -102,3 +105,7 @@ function formatAcademicYear(year) {
     return `${year}-${nextYear}`;
 }
 
+document.addEventListener('keydown', (event) => {
+    const modal = document.getElementById('studentModal');
+    if (event.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeStudentModal();
+});

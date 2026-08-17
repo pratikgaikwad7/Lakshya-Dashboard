@@ -99,10 +99,10 @@ function initEvaluationChart(data, scoreType) {
                 ? window.DashboardChartAnimations.barAnimation()
                 : { duration: 800, easing: 'easeOutQuart' },
             layout: { padding: { top: 18 } },
-            onClick: (event, elements) => {
+            onClick: (event, elements, chart) => {
                 if (elements.length > 0) {
                     const index = elements[0].index;
-                    const range = labels[index];
+                    const range = chart.data.labels[index];
                     openEvalStudentModal(range);
                 }
             },
@@ -140,6 +140,10 @@ function initEvaluationChart(data, scoreType) {
 // ---------------------------------------------------------
 function openEvalStudentModal(range) {
     const scoreType = document.getElementById('evalScoreType').value;
+    const modal = document.getElementById('studentModal');
+    const modalBody = modal.querySelector('.flex-1.overflow-y-auto');
+    const scoreTypeLabels = { all: 'Grand total', bits: 'BITS', ojt: 'OJT', training: 'Training' };
+    const scoreTypeLabel = scoreTypeLabels[scoreType] || 'Score';
     
     const years = Array.from(document.querySelectorAll('.eval-batch-checkbox:checked')).map(el => el.value);
     const plants = Array.from(document.querySelectorAll('.eval-plant-checkbox:checked')).map(el => el.value);
@@ -155,48 +159,53 @@ function openEvalStudentModal(range) {
         score_type: scoreType
     };
 
+    modal.classList.add('is-evaluation-list');
+    document.getElementById('modal-title').textContent = `${scoreTypeLabel} score · ${range}`;
+    document.getElementById('modalSub').textContent = 'Loading matching student records…';
+    document.getElementById('modalAvatar').innerHTML = '<i class="fas fa-chart-column" aria-hidden="true"></i>';
+    modalBody.innerHTML = '<div class="eval-range-state"><span class="eval-range-spinner" aria-hidden="true"></span><strong>Loading students</strong><p>Fetching records for the selected score range.</p></div>';
+    modalBody.setAttribute('aria-busy', 'true');
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+    modal.querySelector('.student-modal-close')?.focus();
+
     csrfFetch('/get-students-in-range', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) throw new Error(`Student range request failed (${res.status})`);
+        return res.json();
+    })
     .then(students => {
-        const modalBody = document.querySelector('#studentModal .flex-1.overflow-y-auto');
+        modalBody.setAttribute('aria-busy', 'false');
         // The skeleton is trusted application markup; all record values use textContent below.
         modalBody.innerHTML = `
-            <div class="p-4">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 id="evalModalTitle" class="text-lg font-bold text-slate-800"></h3>
-                    <button id="evalModalClose" type="button" class="text-slate-400 hover:text-red-500 text-xl">&times;</button>
-                </div>
-                <div class="overflow-x-auto border rounded-lg">
-                    <table class="min-w-full divide-y">
-                        <thead class="bg-slate-50">
+            <div class="eval-range-content">
+                <div class="eval-range-summary"><span><i class="fas fa-users" aria-hidden="true"></i><b id="evalRangeCount"></b></span><p>Click any row to open the student profile.</p></div>
+                <div class="eval-range-table-wrap">
+                    <table class="eval-range-table">
+                        <thead>
                             <tr>
-                                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Name</th>
-                                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Ticket</th>
-                                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Location</th>
-                                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Sem</th>
-                                <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase">Score</th>
+                                <th>Sr No</th><th>Student</th><th>Ticket</th><th>Plant</th><th>Sem</th><th>Score</th>
                             </tr>
                         </thead>
-                        <tbody id="evalModalTableBody" class="bg-white divide-y divide-slate-100"></tbody>
+                        <tbody id="evalModalTableBody"></tbody>
                     </table>
                 </div>
             </div>
         `;
-        document.getElementById('evalModalTitle').textContent = `Students in Range: ${range}`;
-        document.getElementById('evalModalClose').addEventListener('click', closeStudentModal);
-        document.getElementById('studentModal').classList.remove('hidden');
+        document.getElementById('modalSub').textContent = `${students.length} ${students.length === 1 ? 'student' : 'students'} in this range`;
+        document.getElementById('evalRangeCount').textContent = `${students.length} matching ${students.length === 1 ? 'student' : 'students'}`;
 
         const tbody = document.getElementById('evalModalTableBody');
         if (students.length === 0) {
             const emptyRow = document.createElement('tr');
             const emptyCell = document.createElement('td');
-            emptyCell.colSpan = 5;
-            emptyCell.className = 'text-center py-4 text-slate-400';
-            emptyCell.textContent = 'No students found';
+            emptyCell.colSpan = 6;
+            emptyCell.className = 'eval-range-empty';
+            emptyCell.innerHTML = '<i class="fas fa-user-slash" aria-hidden="true"></i><strong>No matching students</strong><span>Try another score range or adjust the chart filters.</span>';
             emptyRow.appendChild(emptyCell);
             tbody.appendChild(emptyRow);
         }
@@ -208,7 +217,7 @@ function openEvalStudentModal(range) {
             if (scoreType === 'training') score = student.calc_training_total;
 
             const row = document.createElement('tr');
-            row.className = 'hover:bg-indigo-50 cursor-pointer transition-colors';
+            row.className = 'eval-range-row';
             row.dataset.index = String(index);
             if (student.id) {
                 row.dataset.profileUrl = `/evaluations/${encodeURIComponent(student.id)}/profile`;
@@ -216,6 +225,7 @@ function openEvalStudentModal(range) {
                 row.setAttribute('aria-label', `View ${student.employee_name || 'student'} profile`);
             }
             const values = [
+                index + 1,
                 student.employee_name || '',
                 student.ticket_no || '',
                 student.plant_location ? student.plant_location.replace(/_/g, ' ') : 'Unknown',
@@ -224,15 +234,12 @@ function openEvalStudentModal(range) {
             ];
             values.forEach((value, cellIndex) => {
                 const cell = document.createElement('td');
-                cell.className = cellIndex === 4
-                    ? 'px-4 py-2 text-sm font-bold text-indigo-600'
-                    : cellIndex === 0
-                        ? 'px-4 py-2 text-sm font-medium text-slate-900'
-                        : 'px-4 py-2 text-sm text-slate-600';
-                if (cellIndex === 0 && student.id) {
+                if (cellIndex === 5) cell.className = 'eval-range-score';
+                if (cellIndex === 1) cell.className = 'eval-range-name';
+                if (cellIndex === 1 && student.id) {
                     const profileLink = document.createElement('a');
                     profileLink.href = row.dataset.profileUrl;
-                    profileLink.className = 'font-semibold text-slate-900 hover:text-indigo-600 transition-colors';
+                    profileLink.className = 'eval-range-profile-link';
                     profileLink.textContent = String(value);
                     cell.appendChild(profileLink);
                 } else {
@@ -259,5 +266,11 @@ function openEvalStudentModal(range) {
                 window.location.href = row.dataset.profileUrl;
             });
         }
+    })
+    .catch(error => {
+        console.error('Error loading students in score range:', error);
+        modalBody.setAttribute('aria-busy', 'false');
+        document.getElementById('modalSub').textContent = 'Student records could not be loaded';
+        modalBody.innerHTML = '<div class="eval-range-state eval-range-state--error"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i><strong>Unable to load students</strong><p>Close this window and try the score range again.</p></div>';
     });
 }

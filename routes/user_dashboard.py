@@ -20,7 +20,7 @@ from models.evaluation_model import (
 )
 from models.student_model import get_all_students, get_filter_options
 from schemas.dashboard import dashboard_filters_from_json, dashboard_filters_from_query
-from security.access import EVALUATION_MANAGEMENT_ROLES, PLANT_RESTRICTED_ROLES, assigned_plant_required, force_plant_scope
+from security.access import PLANT_RESTRICTED_ROLES, assigned_plant_required, force_plant_scope
 
 
 user_dashboard_bp = Blueprint('user_dashboard', __name__)
@@ -88,7 +88,6 @@ def _student_records(batch_year=None):
         filters=filters,
         options=options,
         role=role,
-        can_view_profiles=role in EVALUATION_MANAGEMENT_ROLES,
     )
 
 
@@ -126,6 +125,7 @@ def _dashboard_context():
         total = row['total_students']
         attrition_data.append({
             'location': row['location'],
+            'dropped_count': row['dropped_students'],
             'attrition_pct': round((row['dropped_students'] / total) * 100, 1) if total else 0,
         })
 

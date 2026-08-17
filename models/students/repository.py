@@ -89,8 +89,11 @@ def get_all_students(filters=None):
 
     if filters:
         if filters.get('plant_location'):
-            query += " AND plant_location = %s"
-            params.append(filters['plant_location'])
+            if filters['plant_location'] == 'Unknown':
+                query += " AND (plant_location IS NULL OR plant_location = '')"
+            else:
+                query += " AND plant_location = %s"
+                params.append(filters['plant_location'])
         
         if filters.get('year'):
             query += " AND batch_year = %s"
@@ -125,8 +128,11 @@ def get_all_students(filters=None):
             params.append(f"%{filters['ticket_no']}%")
 
         if filters.get('branch'):
-            query += " AND diploma_branch = %s"
-            params.append(filters['branch'])
+            if filters['branch'] == 'Unknown':
+                query += " AND (diploma_branch IS NULL OR diploma_branch = '')"
+            else:
+                query += " AND diploma_branch = %s"
+                params.append(filters['branch'])
 
         if filters.get('gender'):
             query += " AND gender = %s"

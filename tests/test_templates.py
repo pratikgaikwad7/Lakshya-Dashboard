@@ -187,6 +187,9 @@ class TemplateTests(unittest.TestCase):
         self.assertIn("dataset.profileUrl", chart)
         self.assertIn("/evaluations/${encodeURIComponent(student.id)}/profile", chart)
         self.assertNotIn("openStudentModal(studentData)", chart)
+        self.assertIn("chart.data.labels[index]", chart)
+        self.assertIn("<th>Sr No</th>", chart)
+        self.assertNotIn("evalModalClose", chart)
 
     def test_evaluations_list_uses_compact_enterprise_visual_system(self):
         project_root = Path(__file__).parents[1]
@@ -267,8 +270,8 @@ class TemplateTests(unittest.TestCase):
         self.assertIn("dashboardAuroraDrift", stylesheet)
         self.assertIn("backdrop-filter", stylesheet)
         self.assertIn("#studentTableContainer", stylesheet)
-        self.assertIn("dashboard-kpi-card--students", content)
-        self.assertIn("dashboard-kpi-card--attrition", content)
+        self.assertIn("dashboard-plant-card", content)
+        self.assertIn("dashboard-attrition-card", content)
         self.assertIn("dashboard-kpi-card--batches", content)
         self.assertIn("dashboard-kpi-card--branches", content)
         self.assertIn(".dashboard-kpi-card--branches", stylesheet)

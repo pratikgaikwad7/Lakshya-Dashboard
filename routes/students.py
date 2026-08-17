@@ -3,7 +3,6 @@ from flask_login import current_user
 
 from extensions import limiter
 from security.access import (
-    EVALUATION_MANAGEMENT_ROLES,
     STUDENT_MANAGEMENT_ROLES,
     assigned_plant_required,
     roles_required,
@@ -28,7 +27,7 @@ def index():
         assigned_plant_required()
     return render_template(
         'students.html',
-        can_view_evaluations=current_user.role in EVALUATION_MANAGEMENT_ROLES,
+        can_view_evaluations=True,
     )
 
 
