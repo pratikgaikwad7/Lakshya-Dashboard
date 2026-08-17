@@ -47,11 +47,6 @@
                     <span>Students</span>
                 </a>
 
-                <a href="{{ url_for('user_dashboard.new_dashboard') }}" class="admin-nav__link">
-                    <i class="fas fa-chart-column"></i>
-                    <span>New Dashboard</span>
-                </a>
-
                 <p class="admin-nav__label admin-nav__label--system">System</p>
 
                 {% if role == 'Admin' %}
@@ -183,14 +178,6 @@
                             <span class="admin-action-card__arrow"><i class="fas fa-arrow-right"></i></span>
                         </a>
 
-                        <a href="{{ url_for('user_dashboard.new_dashboard') }}" class="admin-action-card admin-action-card--dashboard">
-                            <span class="admin-action-card__icon"><i class="fas fa-chart-column"></i></span>
-                            <div>
-                                <h4>New Dashboard</h4>
-                                <p>Explore the redesigned tracking view</p>
-                            </div>
-                            <span class="admin-action-card__arrow"><i class="fas fa-arrow-right"></i></span>
-                        </a>
                     </div>
                 </section>
             </main>

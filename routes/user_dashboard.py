@@ -32,15 +32,6 @@ def dashboard():
     return render_template('user_dashboard.html', **_dashboard_context())
 
 
-@user_dashboard_bp.route('/new-dashboard', methods=['GET'])
-@login_required
-def new_dashboard():
-    context = _dashboard_context()
-    today = date.today()
-    context['current_academic_year'] = today.year if today.month >= 4 else today.year - 1
-    return render_template('new_dashboard.html', **context)
-
-
 @user_dashboard_bp.route('/batches/<int:batch_year>/students', methods=['GET'])
 @login_required
 def batch_students(batch_year):
