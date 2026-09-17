@@ -1,0 +1,84 @@
+:root {
+    color-scheme: light;
+    font-family: Arial, Helvetica, sans-serif;
+    --error-navy: #06152f;
+    --error-blue: #1457d9;
+    --error-ink: #172033;
+    --error-muted: #607089;
+    --error-line: #d9e2ef;
+}
+
+* { box-sizing: border-box; }
+
+body { margin: 0; }
+
+.error-page {
+    display: grid;
+    min-height: 100vh;
+    padding: 24px;
+    place-items: center;
+    color: var(--error-ink);
+    background: #f2f6fb;
+}
+
+.error-panel {
+    position: relative;
+    width: min(100%, 560px);
+    padding: 52px 40px 44px;
+    border: 1px solid var(--error-line);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 18px 44px -34px rgba(6, 21, 47, .55);
+    text-align: center;
+}
+
+.error-back {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    color: #40516a;
+    border: 1px solid var(--error-line);
+    border-radius: 10px;
+    background: #f8fafc;
+    text-decoration: none;
+}
+
+.error-back:hover { color: var(--error-blue); border-color: #abc4ec; }
+.error-back:focus-visible, .error-primary:focus-visible { outline: 3px solid rgba(20, 87, 217, .25); outline-offset: 3px; }
+
+.error-code {
+    color: var(--error-blue);
+    font-size: clamp(48px, 11vw, 76px);
+    font-weight: 800;
+    letter-spacing: -.04em;
+    line-height: 1;
+}
+
+.error-panel h1 { margin: 14px 0 0; font-size: clamp(24px, 5vw, 32px); letter-spacing: -.025em; }
+.error-panel p { max-width: 42ch; margin: 12px auto 0; color: var(--error-muted); font-size: 15px; line-height: 1.6; }
+
+.error-primary {
+    display: inline-flex;
+    min-height: 42px;
+    margin-top: 28px;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    color: #fff;
+    border-radius: 10px;
+    background: var(--error-navy);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.error-primary:hover { background: #0b2c56; }
+
+@media (max-width: 520px) {
+    .error-page { padding: 12px; }
+    .error-panel { padding: 56px 22px 34px; }
+}

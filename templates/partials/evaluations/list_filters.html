@@ -23,14 +23,14 @@
             <div class="lakshya-filter-body flex-1 overflow-y-auto space-y-4">
                 
                 <!-- Upload Button -->
-                <a href="/evaluations/upload-excel" class="evaluation-upload-action flex items-center justify-center w-full text-white text-xs font-bold transition border">
+                <a href="{{ url_for('evaluations.upload_evaluations_excel') }}" class="evaluation-upload-action flex items-center justify-center w-full text-white text-xs font-bold transition border">
                     <i class="fas fa-file-excel mr-2"></i> Upload Evaluation Excel
                 </a>
 
                 <div class="lakshya-filter-section">
                     <h4 class="lakshya-filter-section-title"><i class="fas fa-chart-line"></i> Evaluation Details</h4>
                     <!-- Filter Form -->
-                    <form id="evaluationFilterForm" action="/evaluations" method="GET" class="space-y-3">
+                    <form id="evaluationFilterForm" action="{{ url_for('evaluations.list_evaluations') }}" method="GET" class="space-y-3">
 
                         <!-- Student Name -->
                         <div>
@@ -167,7 +167,7 @@
 
                         <!-- Action Buttons -->
                         <div class="lakshya-filter-actions">
-                            <a href="/evaluations" class="lakshya-filter-secondary w-full px-3 py-2 text-center">
+                            <a href="{{ url_for('evaluations.list_evaluations') }}" class="lakshya-filter-secondary w-full px-3 py-2 text-center">
                                 <i class="fas fa-rotate-left mr-1"></i> Reset filters
                             </a>
                         </div>

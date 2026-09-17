@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, session, flash
+from flask import Blueprint, render_template, request, redirect, session, flash, url_for
 from flask_login import login_required, login_user, logout_user
 
 from extensions import limiter
@@ -28,16 +28,16 @@ def login():
         session['is_admin'] = user.role == 'Admin'
 
         if user.role in ['Admin', 'PMO', 'SDC Coordinator']:
-            return redirect('/admin-dashboard')
-        return redirect('/user_dashboard')
+            return redirect(url_for('admin.admin_dashboard'))
+        return redirect(url_for('user_dashboard.dashboard'))
 
     # If login fails
     flash('Invalid Username or Password', 'error')
-    return redirect('/login')
+    return redirect(url_for('auth.login_page'))
 
 @auth_bp.route('/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
     session.clear()
-    return redirect('/login')
+    return redirect(url_for('auth.login_page'))

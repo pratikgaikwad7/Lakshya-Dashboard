@@ -14,12 +14,29 @@
 <body>
     <div id="pageScrollProgress" class="page-scroll-progress" aria-hidden="true"></div>
 
-    <header class="profile-nav">
-        <div class="profile-shell profile-nav__inner">
-            <a href="{% if can_manage_evaluations %}{{ url_for('evaluations.list_evaluations') }}{% else %}{{ url_for('user_dashboard.dashboard') }}{% endif %}" class="profile-back-link">
+    <header class="profile-hero profile-page-header">
+        <div class="profile-hero__grid" aria-hidden="true"></div>
+        <div class="ambient-orb ambient-orb--one" aria-hidden="true"></div>
+
+        <div class="profile-shell profile-page-header__inner">
+            <a href="{% if can_manage_evaluations %}{{ url_for('evaluations.list_evaluations') }}{% else %}{{ url_for('user_dashboard.dashboard') }}{% endif %}" class="profile-back-link" aria-label="{% if can_manage_evaluations %}Back to evaluation workspace{% else %}Back to dashboard{% endif %}" title="Back">
                 <span class="profile-back-link__icon"><i class="fas fa-arrow-left"></i></span>
-                <span>{% if can_manage_evaluations %}Evaluation workspace{% else %}Dashboard{% endif %}</span>
             </a>
+
+            <div class="profile-hero__main profile-reveal">
+                <div class="profile-avatar" aria-hidden="true">
+                    {{ (student.employee_name or '?')[0]|upper }}
+                    <span></span>
+                </div>
+                <div class="profile-page-header__identity">
+                    <div class="profile-eyebrow">
+                        <span class="profile-live-dot"></span>
+                        Trainee profile
+                    </div>
+                    <h1>{{ student.employee_name or 'Unnamed trainee' }}</h1>
+                </div>
+            </div>
+
             {% if can_manage_evaluations and summary.current_semester %}
             <a href="{{ url_for('evaluations.evaluation_sheet', student_id=student.id, semester=summary.current_semester) }}" class="profile-primary-action">
                 <i class="fas fa-file-signature"></i>
@@ -30,28 +47,6 @@
     </header>
 
     <main>
-        <section class="profile-hero">
-            <div class="profile-hero__grid" aria-hidden="true"></div>
-            <div class="ambient-orb ambient-orb--one" aria-hidden="true"></div>
-            <div class="ambient-orb ambient-orb--two" aria-hidden="true"></div>
-
-            <div class="profile-shell profile-hero__content">
-                <div class="profile-hero__main profile-reveal">
-                    <div class="profile-avatar" aria-hidden="true">
-                        {{ (student.employee_name or '?')[0]|upper }}
-                        <span></span>
-                    </div>
-                    <div>
-                        <div class="profile-eyebrow">
-                            <span class="profile-live-dot"></span>
-                            Trainee profile
-                        </div>
-                        <h1>{{ student.employee_name or 'Unnamed trainee' }}</h1>
-                    </div>
-                </div>
-            </div>
-        </section>
-
         <div class="profile-shell profile-content">
             <section class="profile-panel identity-panel scroll-reveal">
                 <div class="profile-section-heading">

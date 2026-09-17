@@ -69,43 +69,11 @@
         const container = root || document;
         const sections = Array.from(container.querySelectorAll('.dashboard-animate-section'))
             .filter(section => !section.classList.contains('hidden'));
-        if (!sections.length || reducedMotionQuery.matches || !hasGsap()) {
-            sections.forEach(section => {
-                section.style.opacity = '1';
-                section.style.transform = 'none';
-            });
-            return;
-        }
-
-        prepareGsap();
-        const topCards = sections.filter(section => section.classList.contains('dashboard-top-card'));
-        if (topCards.length) {
-            window.gsap.fromTo(topCards,
-                { y: 12, opacity: 0 },
-                { y: 0, opacity: 1, duration: 0.52, stagger: 0.07, ease: 'power2.out', clearProps: 'transform,opacity' }
-            );
-        }
-
-        sections.filter(section => !section.classList.contains('dashboard-top-card')).forEach(section => {
-            if (!window.ScrollTrigger) {
-                window.gsap.fromTo(section, { y: 16, opacity: 0 }, {
-                    y: 0, opacity: 1, duration: 0.55, ease: 'power2.out', clearProps: 'transform,opacity'
-                });
-                return;
-            }
-            window.gsap.fromTo(section, { y: 16, opacity: 0 }, {
-                scrollTrigger: {
-                    trigger: section,
-                    scroller: container.id === 'mainContent' ? container : undefined,
-                    start: 'top 88%',
-                    once: true
-                },
-                y: 0,
-                opacity: 1,
-                duration: 0.55,
-                ease: 'power2.out',
-                clearProps: 'transform,opacity'
-            });
+        // This is a high-frequency operational screen. Cards and data should be
+        // immediately readable instead of arriving as a decorative sequence.
+        sections.forEach(section => {
+            section.style.opacity = '1';
+            section.style.transform = 'none';
         });
     }
 
@@ -141,12 +109,8 @@
             refresh();
         }, reducedMotionQuery.matches ? 0 : 320);
 
-        if (reducedMotionQuery.matches || !hasGsap()) return;
-        window.gsap.killTweensOf(sidebar.querySelector('.sidebar-content'));
-        window.gsap.fromTo(sidebar.querySelector('.sidebar-content'),
-            { opacity: isOpen ? 0 : 1, y: isOpen ? 6 : 0 },
-            { opacity: isOpen ? 1 : 0, y: 0, duration: 0.28, ease: 'power2.out', overwrite: true }
-        );
+        // The drawer's CSS opacity transition is deliberately small and
+        // interruptible; dashboard content itself remains stationary.
     }
 
     function refresh() {

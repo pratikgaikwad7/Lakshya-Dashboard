@@ -186,6 +186,21 @@ class CSRFTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
 
+class ErrorResponseTests(unittest.TestCase):
+    def setUp(self):
+        self.client = create_app(TestingConfig).test_client()
+
+    def test_missing_page_uses_branded_html_404(self):
+        response = self.client.get('/page-that-does-not-exist')
+        self.assertEqual(response.status_code, 404)
+        self.assertIn(b'Page not found', response.data)
+        self.assertIn(b'Return to LAKSHYA', response.data)
+
+    def test_missing_api_uses_json_404(self):
+        response = self.client.get('/api/does-not-exist')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.get_json()['code'], 'not_found')
+
 class FakeCursor:
     def __init__(self, fetch_results=None, fail_on_evaluation_insert=False):
         self.fetch_results = list(fetch_results or [])

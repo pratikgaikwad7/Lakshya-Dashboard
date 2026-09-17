@@ -12,7 +12,7 @@
 <body class="evaluation-upload-page">
     <header class="evaluation-upload-header">
         <div class="evaluation-upload-header__inner">
-            <a href="/evaluations" class="evaluation-upload-back"><i class="fas fa-arrow-left" aria-hidden="true"></i><span>Evaluations</span></a>
+            <a href="{{ url_for('evaluations.list_evaluations') }}" class="evaluation-upload-back"><i class="fas fa-arrow-left" aria-hidden="true"></i><span>Evaluations</span></a>
             <div class="evaluation-upload-title">
                 <span class="evaluation-upload-title__icon"><i class="fas fa-file-excel" aria-hidden="true"></i></span>
                 <div><h1>Upload evaluation records</h1><p>Import multiple trainee scores from one Excel workbook.</p></div>
@@ -28,6 +28,7 @@
         </div>
         {% endif %}
 
+        <div class="evaluation-upload-grid">
         <section class="evaluation-upload-guide" aria-labelledby="workbookGuideTitle">
             <div class="evaluation-upload-guide__copy">
                 <h2 id="workbookGuideTitle">Prepare your workbook</h2>
@@ -37,6 +38,18 @@
                 <i class="fas fa-download" aria-hidden="true"></i>
                 <span><strong>Download Excel template</strong><small>Includes an example and score validation</small></span>
             </a>
+
+            <div class="evaluation-upload-warning" role="note" aria-labelledby="uploadWarningTitle">
+                <div class="evaluation-upload-warning__heading">
+                    <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                    <div><h3 id="uploadWarningTitle">Review before uploading</h3><p>The import changes evaluation records immediately.</p></div>
+                </div>
+                <ul>
+                    <li><strong>Active trainees only.</strong> Ticket numbers must belong to active trainees visible to your account.</li>
+                    <li><strong>Existing records are updated.</strong> A matching Ticket No and Semester replaces that semester’s saved scores.</li>
+                    <li><strong>Blank scores become zero.</strong> Complete and verify every optional score you intend to preserve.</li>
+                </ul>
+            </div>
 
             <div class="evaluation-upload-requirements">
                 <div class="evaluation-requirement"><span class="evaluation-requirement__status evaluation-requirement__status--required">Required</span><div><strong>Ticket No</strong><small>Must match an active trainee in LAKSHYA.</small></div></div>
@@ -62,9 +75,9 @@
         <section class="evaluation-upload-workspace" aria-labelledby="uploadFileTitle">
             <div class="evaluation-upload-workspace__heading">
                 <div><h2 id="uploadFileTitle">Select your completed file</h2><p>Excel `.xlsx` or `.xls`, up to 10 MB.</p></div>
-                <span class="evaluation-upload-step">Ready to import</span>
+                <span class="evaluation-upload-step" data-upload-state>Select a file</span>
             </div>
-            <form id="evaluationUploadForm" action="/evaluations/upload-excel" method="POST" enctype="multipart/form-data">
+            <form id="evaluationUploadForm" action="{{ url_for('evaluations.upload_evaluations_excel') }}" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <label for="evaluationFile" id="evaluationDropzone" class="evaluation-dropzone">
                     <span class="evaluation-dropzone__icon"><i class="fas fa-arrow-up-from-bracket" aria-hidden="true"></i></span>
@@ -83,12 +96,13 @@
                 </div>
             </form>
         </section>
+        </div>
 
         {% if success_count is not none or error_rows %}
         <section class="evaluation-upload-results" aria-labelledby="uploadResultsTitle">
             <div class="evaluation-upload-results__heading">
                 <div><h2 id="uploadResultsTitle">Upload results</h2><p>{{ success_count or 0 }} processed{% if error_rows %} · {{ error_rows|length }} skipped{% endif %}</p></div>
-                <a href="/evaluations" class="evaluation-results-action">View evaluations <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                <a href="{{ url_for('evaluations.list_evaluations') }}" class="evaluation-results-action">View evaluations <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
             </div>
             {% if success_count > 0 %}
             <div class="evaluation-upload-alert evaluation-upload-alert--success" role="status"><i class="fas fa-circle-check" aria-hidden="true"></i><div><strong>Import complete</strong><p>{{ success_count }} records were processed successfully.</p></div></div>

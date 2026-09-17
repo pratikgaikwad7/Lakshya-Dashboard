@@ -30,19 +30,19 @@
             <nav class="admin-nav">
                 <p class="admin-nav__label">Main Menu</p>
 
-                <a href="/admin-dashboard" class="admin-nav__link is-active">
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="admin-nav__link is-active">
                     <i class="fas fa-th-large"></i>
                     <span>Dashboard</span>
                 </a>
 
                 {% if role != 'PMO' %}
-                <a href="/evaluations" class="admin-nav__link">
+                <a href="{{ url_for('evaluations.list_evaluations') }}" class="admin-nav__link">
                     <i class="fas fa-chart-pie"></i>
                     <span>Evaluations</span>
                 </a>
                 {% endif %}
 
-                <a href="/students" class="admin-nav__link">
+                <a href="{{ url_for('students.index') }}" class="admin-nav__link">
                     <i class="fas fa-user-graduate"></i>
                     <span>Students</span>
                 </a>
@@ -50,7 +50,7 @@
                 <p class="admin-nav__label admin-nav__label--system">System</p>
 
                 {% if role == 'Admin' %}
-                <a href="/users" class="admin-nav__link">
+                <a href="{{ url_for('users.users_page') }}" class="admin-nav__link">
                     <i class="fas fa-users-cog"></i>
                     <span>Manage Users</span>
                 </a>
@@ -150,7 +150,7 @@
 
                     <div class="admin-action-grid">
                         {% if role != 'PMO' %}
-                        <a href="/evaluations" class="admin-action-card admin-action-card--evaluation">
+                        <a href="{{ url_for('evaluations.list_evaluations') }}" class="admin-action-card admin-action-card--evaluation">
                             <span class="admin-action-card__icon"><i class="fas fa-chart-pie"></i></span>
                             <div>
                                 <h4>Start Evaluations</h4>
@@ -160,7 +160,7 @@
                         </a>
                         {% endif %}
 
-                        <a href="/students" class="admin-action-card admin-action-card--students">
+                        <a href="{{ url_for('students.index') }}" class="admin-action-card admin-action-card--students">
                             <span class="admin-action-card__icon"><i class="fas fa-user-plus"></i></span>
                             <div>
                                 <h4>Manage Students</h4>

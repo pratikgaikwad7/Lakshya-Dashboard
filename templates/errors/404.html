@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page not found | LAKSHYA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/error-page.css') }}">
+</head>
+<body class="error-page">
+    <main class="error-panel" aria-labelledby="errorTitle">
+        <a class="error-back" href="{{ home_url }}" aria-label="Back to LAKSHYA" title="Back">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+        </a>
+        <div class="error-code" aria-hidden="true">404</div>
+        <h1 id="errorTitle">Page not found</h1>
+        <p>The address may be incorrect, or the page may have moved.</p>
+        <a class="error-primary" href="{{ home_url }}">Return to LAKSHYA</a>
+    </main>
+</body>
+</html>

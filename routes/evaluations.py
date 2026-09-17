@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from flask import Blueprint, render_template, request, redirect, send_file
+from flask import Blueprint, render_template, request, redirect, send_file, url_for
 from flask_login import current_user, login_required
 
 from exceptions import NotFoundError, ValidationError
@@ -102,7 +102,7 @@ def evaluation_sheet(student_id):
         success, message = upsert_evaluation_scores(student_id, semester, scores)
         if not success:
             raise ValidationError(message)
-        return redirect(f'/evaluations/{student_id}?semester={semester}')
+        return redirect(url_for('evaluations.evaluation_sheet', student_id=student_id, semester=semester))
 
     active_evaluation = get_student_active_evaluation(student_id)
     if not active_evaluation:
@@ -186,7 +186,7 @@ def move_next_semester(student_id):
     success, message = promote_student_semester(student_id)
     if not success:
         raise ValidationError(message)
-    return redirect(f'/evaluations/{student_id}')
+    return redirect(url_for('evaluations.evaluation_sheet', student_id=student_id))
 
 
 @evaluations_bp.route('/evaluations/<int:student_id>/end-semester-seven', methods=['POST'])
@@ -196,7 +196,7 @@ def end_semester_seven_route(student_id):
     success, message = end_seventh_semester(student_id)
     if not success:
         raise ValidationError(message)
-    return redirect(f'/evaluations/{student_id}')
+    return redirect(url_for('evaluations.evaluation_sheet', student_id=student_id))
 
 
 @evaluations_bp.route('/evaluations/upload-excel', methods=['GET', 'POST'])

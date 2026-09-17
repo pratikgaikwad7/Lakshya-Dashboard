@@ -1,7 +1,7 @@
         <form
             id="editForm"
             method="POST"
-            action="/evaluations/{{ student.id }}?semester={{ current_semester }}"
+            action="{{ url_for('evaluations.evaluation_sheet', student_id=student.id, semester=current_semester) }}"
             class="semester-card evaluation-edit-card hidden"
             data-enterprise-confirm
             data-confirm-title="Save evaluation changes?"

@@ -101,7 +101,7 @@
                                                 <i class="fas fa-check-circle mr-1.5"></i> Completed
                                             </button>
                                         {% else %}
-                                            <a href="/evaluations/{{ student.id }}{% if student.semester %}?semester={{ student.semester }}{% endif %}" 
+                                            <a href="{{ url_for('evaluations.evaluation_sheet', student_id=student.id, semester=student.semester) if student.semester else url_for('evaluations.evaluation_sheet', student_id=student.id) }}"
                                                class="evaluation-row-action inline-flex items-center text-white text-xs font-bold">
                                                 <i class="fas fa-edit mr-1.5"></i> Evaluate
                                             </a>

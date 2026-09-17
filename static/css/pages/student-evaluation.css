@@ -620,3 +620,19 @@ body {
         transition-duration: .01ms !important;
     }
 }
+.evaluation-list-back {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    margin-right: 10px;
+    place-items: center;
+    color: #dbeafe;
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, .07);
+    text-decoration: none;
+}
+
+.evaluation-list-back:hover { color: #fff; background: rgba(255, 255, 255, .12); }
+.evaluation-list-back:focus-visible { outline: 2px solid #67e8f9; outline-offset: 2px; }

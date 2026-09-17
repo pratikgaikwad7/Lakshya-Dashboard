@@ -1,4 +1,4 @@
-from flask import Blueprint, flash, redirect, render_template, request
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from mysql.connector import IntegrityError
 
@@ -45,7 +45,7 @@ def users_add():
         raise ConflictError('That username already exists.') from error
 
     flash(f"User '{username}' was created successfully.", 'success')
-    return redirect('/users')
+    return redirect(url_for('users.users_page'))
 
 
 @users_bp.route('/users/update/<int:id>', methods=['POST'])
@@ -70,7 +70,7 @@ def users_update(id):
         raise ConflictError('That username already exists.') from error
 
     flash(f"User '{username}' was updated successfully.", 'success')
-    return redirect('/users')
+    return redirect(url_for('users.users_page'))
 
 
 @users_bp.route('/users/delete/<int:id>', methods=['POST'])
@@ -80,4 +80,4 @@ def users_delete(id):
         raise ValidationError('You cannot delete your active account.')
     delete_user(id)
     flash('User account was deleted.', 'success')
-    return redirect('/users')
+    return redirect(url_for('users.users_page'))

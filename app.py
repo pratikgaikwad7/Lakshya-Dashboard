@@ -2,7 +2,7 @@ import logging
 from threading import Lock
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, redirect, request
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from flask_wtf.csrf import CSRFError
 from werkzeug.exceptions import HTTPException
 
@@ -72,6 +72,15 @@ def _wants_json():
     return request.path.startswith("/api/") or request.is_json
 
 
+def _error_home_url():
+    role = session.get("role")
+    if role in {"Admin", "PMO", "SDC Coordinator"}:
+        return url_for("admin.admin_dashboard")
+    if role:
+        return url_for("user_dashboard.dashboard")
+    return url_for("auth.login_page")
+
+
 def _register_error_handlers(app):
     @login_manager.unauthorized_handler
     def unauthorized():
@@ -83,22 +92,57 @@ def _register_error_handlers(app):
     def handle_app_error(error):
         if _wants_json():
             return jsonify({"error": error.message, "code": error.code}), error.status_code
-        return error.message, error.status_code
+        return render_template(
+            "errors/error.html",
+            status_code=error.status_code,
+            title="Request could not be completed",
+            message=error.message,
+            home_url=_error_home_url(),
+        ), error.status_code
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(error):
         if _wants_json():
             return jsonify({"error": "Invalid or missing CSRF token.", "code": "csrf_error"}), 400
-        return "Invalid or missing CSRF token.", 400
+        return render_template(
+            "errors/error.html",
+            status_code=400,
+            title="Your session needs refreshing",
+            message="Reload the page and try the action again.",
+            home_url=_error_home_url(),
+        ), 400
+
+    @app.errorhandler(404)
+    def handle_not_found(error):
+        if _wants_json():
+            return jsonify({"error": "The requested resource was not found.", "code": "not_found"}), 404
+        return render_template("errors/404.html", home_url=_error_home_url()), 404
+
+    @app.errorhandler(HTTPException)
+    def handle_http_error(error):
+        if _wants_json():
+            code = error.name.lower().replace(" ", "_")
+            return jsonify({"error": error.description, "code": code}), error.code
+        return render_template(
+            "errors/error.html",
+            status_code=error.code,
+            title=error.name,
+            message=error.description,
+            home_url=_error_home_url(),
+        ), error.code
 
     @app.errorhandler(Exception)
     def handle_unexpected_error(error):
-        if isinstance(error, HTTPException):
-            return error
         app.logger.exception("Unhandled application error", exc_info=error)
         if _wants_json():
             return jsonify({"error": "An unexpected error occurred.", "code": "internal_error"}), 500
-        return "An unexpected error occurred.", 500
+        return render_template(
+            "errors/error.html",
+            status_code=500,
+            title="Something went wrong",
+            message="The page could not be completed. Please return and try again.",
+            home_url=_error_home_url(),
+        ), 500
 
 
 def _register_security_headers(app):

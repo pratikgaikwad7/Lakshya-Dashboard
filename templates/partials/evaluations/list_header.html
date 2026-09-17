@@ -6,6 +6,9 @@
 
         <div class="evaluation-list-header__inner max-w-full mx-auto h-full flex justify-between items-center">
             <div class="evaluation-list-header__left flex items-center">
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="evaluation-list-back" aria-label="Back to dashboard" title="Back">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
                 
                 <!-- FILTER TOGGLE BUTTON -->
                 <button id="evaluationFilterToggle" type="button" onclick="toggleSidebar()" aria-label="Filters" aria-controls="filterSidebar" aria-expanded="false" class="evaluation-filter-toggle lakshya-filter-toggle flex items-center gap-2 transition border">

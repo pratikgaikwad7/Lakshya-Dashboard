@@ -38,7 +38,7 @@ a {
 }
 
 .profile-shell {
-    width: min(1180px, calc(100% - 32px));
+    width: min(1400px, calc(100% - 24px));
     margin: 0 auto;
 }
 
@@ -133,6 +133,75 @@ a {
 .profile-primary-action:hover {
     transform: translateY(-1px);
     box-shadow: 0 14px 28px -14px rgba(79, 70, 229, .85);
+}
+
+.profile-page-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    box-shadow: 0 8px 22px -16px rgba(2, 8, 23, .9);
+}
+
+.profile-page-header__inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    min-height: 76px;
+    grid-template-columns: 1fr minmax(0, auto) 1fr;
+    align-items: center;
+    gap: 24px;
+    padding-block: 10px;
+}
+
+.profile-page-header .profile-back-link {
+    width: 34px;
+    color: #dbe7f5;
+}
+
+.profile-page-header .profile-back-link__icon {
+    color: #fff;
+    border-color: rgba(255, 255, 255, .18);
+    background: rgba(255, 255, 255, .07);
+}
+
+.profile-page-header .profile-back-link:hover .profile-back-link__icon {
+    color: #fff;
+    border-color: rgba(103, 232, 249, .55);
+    background: rgba(255, 255, 255, .11);
+}
+
+.profile-page-header .profile-hero__main {
+    justify-self: center;
+}
+
+.profile-page-header .profile-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    font-size: 17px;
+}
+
+.profile-page-header__identity {
+    min-width: 0;
+}
+
+.profile-page-header .profile-eyebrow {
+    font-size: 9px;
+    letter-spacing: .14em;
+}
+
+.profile-page-header.profile-hero h1 {
+    overflow: hidden;
+    max-width: min(48vw, 720px);
+    margin: 3px 0 0;
+    font-size: clamp(17px, 1.8vw, 23px);
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-page-header .profile-primary-action {
+    justify-self: end;
 }
 
 .profile-hero {
@@ -427,9 +496,10 @@ a {
 
 .profile-content {
     display: grid;
-    gap: 26px;
-    padding-top: 26px;
-    padding-bottom: 64px;
+    min-width: 0;
+    gap: 18px;
+    padding-top: 18px;
+    padding-bottom: 40px;
 }
 
 .profile-kpi-grid {
@@ -526,11 +596,16 @@ a {
 
 .profile-panel,
 .semester-card {
+    min-width: 0;
     border-radius: 22px;
 }
 
+.identity-grid dd {
+    overflow-wrap: anywhere;
+}
+
 .profile-panel {
-    padding: 26px;
+    padding: 22px;
 }
 
 .profile-section-heading,
@@ -727,7 +802,7 @@ a {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1px;
     overflow: hidden;
-    margin: 24px 0 0;
+    margin: 18px 0 0;
     border: 1px solid #e2e8f0;
     border-radius: 15px;
     background: #e2e8f0;
@@ -735,7 +810,7 @@ a {
 
 .identity-grid div {
     min-width: 0;
-    padding: 15px;
+    padding: 12px 14px;
     background: #f8fafc;
 }
 
@@ -759,7 +834,7 @@ a {
 
 .semester-records {
     display: grid;
-    gap: 22px;
+    gap: 18px;
     scroll-margin-top: 88px;
 }
 
@@ -1105,6 +1180,20 @@ a {
 }
 
 @media (max-width: 980px) {
+    .profile-shell {
+        width: calc(100% - 20px);
+    }
+
+    .profile-content {
+        gap: 16px;
+        padding-top: 16px;
+        padding-bottom: 32px;
+    }
+
+    .profile-panel {
+        padding: 18px;
+    }
+
     .profile-hero__content {
         align-items: flex-start;
         flex-direction: column;
@@ -1127,7 +1216,7 @@ a {
 
 @media (max-width: 720px) {
     .profile-shell {
-        width: min(100% - 22px, 1180px);
+        width: calc(100% - 16px);
     }
 
     .profile-nav__identity {
@@ -1136,6 +1225,35 @@ a {
 
     .profile-primary-action span {
         display: none;
+    }
+
+    .profile-page-header__inner {
+        min-height: 66px;
+        grid-template-columns: 36px minmax(0, 1fr) auto;
+        gap: 10px;
+        padding-block: 8px;
+    }
+
+    .profile-page-header .profile-eyebrow {
+        display: none;
+    }
+
+    .profile-page-header .profile-hero__main {
+        justify-self: start;
+        gap: 9px;
+    }
+
+    .profile-page-header .profile-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        font-size: 15px;
+    }
+
+    .profile-page-header.profile-hero h1 {
+        max-width: none;
+        margin: 0;
+        font-size: clamp(14px, 4.2vw, 18px);
     }
 
     .profile-hero__content {
@@ -1180,7 +1298,7 @@ a {
     }
 
     .profile-panel {
-        padding: 20px 16px;
+        padding: 16px 14px;
     }
 
     .profile-section-heading,
