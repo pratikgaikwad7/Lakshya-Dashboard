@@ -25,9 +25,9 @@
     </header>
 
     <div class="sticky-top-strip bg-white px-4 md:px-6 flex items-center gap-3 md:gap-4 flex-wrap z-20 flex-shrink-0 border-b border-slate-200" style="padding-top: 0.5rem; padding-bottom: 0.5rem;">
-        <button id="filterToggleButton" type="button" onclick="toggleSidebar()" aria-controls="filterSidebar" aria-expanded="false" class="dashboard-filter-trigger bg-indigo-600 hover:bg-indigo-700 text-white px-3 md:px-4 py-1.5 rounded-lg font-bold text-xs md:text-sm transition flex items-center gap-2 shadow-sm">
-            <i class="fas fa-sliders-h"></i>
-            <span>Filters</span>
+        <button id="filterToggleButton" type="button" onclick="toggleSidebar()" aria-label="Open filters" aria-controls="filterSidebar" aria-expanded="false" class="dashboard-filter-trigger bg-indigo-600 hover:bg-indigo-700 text-white px-3 md:px-4 py-1.5 rounded-lg font-bold text-xs md:text-sm transition flex items-center gap-2 shadow-sm">
+            <i id="filterToggleIcon" class="fas fa-sliders-h" aria-hidden="true"></i>
+            <span id="filterToggleText">Filters</span>
         </button>
         <div id="activeFilterSummary" class="flex items-center gap-2 md:gap-3 flex-wrap flex-1" aria-live="polite">
             {% set has_filters = false %}

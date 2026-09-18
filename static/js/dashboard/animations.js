@@ -95,12 +95,19 @@
     function setSidebarOpen(isOpen) {
         const sidebar = document.getElementById('filterSidebar');
         const toggle = document.getElementById('filterToggleButton');
+        const toggleText = document.getElementById('filterToggleText');
+        const toggleIcon = document.getElementById('filterToggleIcon');
         const backdrop = document.getElementById('sidebarBackdrop');
         if (!sidebar) return;
 
         sidebar.classList.toggle('open', isOpen);
         sidebar.setAttribute('aria-hidden', String(!isOpen));
-        if (toggle) toggle.setAttribute('aria-expanded', String(isOpen));
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', String(isOpen));
+            toggle.setAttribute('aria-label', isOpen ? 'Close filters' : 'Open filters');
+        }
+        if (toggleText) toggleText.textContent = isOpen ? 'Close filters' : 'Filters';
+        if (toggleIcon) toggleIcon.className = `fas ${isOpen ? 'fa-times' : 'fa-sliders-h'}`;
         if (backdrop) backdrop.classList.toggle('visible', isOpen && window.innerWidth <= 768);
 
         window.clearTimeout(sidebarResizeTimer);

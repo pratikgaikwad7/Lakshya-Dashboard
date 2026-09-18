@@ -1,22 +1,5 @@
         <aside id="filterSidebar" class="filter-sidebar bg-white flex-shrink-0 h-full" aria-hidden="true" aria-label="Dashboard filters">
             <div class="sidebar-content h-full flex flex-col">
-                <div class="filter-sidebar-header px-4 md:px-5 py-4 flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <span class="filter-header-icon"><i class="fas fa-sliders-h"></i></span>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h3 class="text-xs md:text-sm font-bold text-slate-800 uppercase tracking-wider">Smart Filters</h3>
-                                <span class="filter-live-indicator"><span></span>Live</span>
-                                <span class="dashboard-filter-status" data-filter-status role="status" aria-live="polite" hidden></span>
-                            </div>
-                            <p class="text-[10px] text-slate-400 mt-0.5">Refine dashboard intelligence</p>
-                        </div>
-                    </div>
-                    <button type="button" onclick="toggleSidebar(false)" class="filter-close-button text-slate-400 hover:text-red-500 transition" aria-label="Close filters">
-                        <i class="fas fa-times text-xs"></i>
-                    </button>
-                </div>
-
                 <form id="dashboardFilterForm" action="{{ url_for(dashboard_endpoint|default('user_dashboard.dashboard')) }}" method="GET" class="filter-form flex-1 overflow-y-auto px-4 md:px-5 py-4 md:py-5 space-y-4">
                     
                     {% macro checkbox_filter(name, label, options, selected_values) %}

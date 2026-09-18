@@ -1234,6 +1234,42 @@ body {
     box-shadow: 24px 0 50px -34px rgba(2, 8, 23, .85);
 }
 
+.filter-form {
+    padding: 12px 14px !important;
+}
+
+.filter-form.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 12px;
+}
+
+.filter-section {
+    padding: 11px;
+}
+
+.filter-section.space-y-3 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 10px;
+}
+
+@media (min-width: 769px) and (max-width: 1440px) {
+    .filter-sidebar.open {
+        width: clamp(248px, 21vw, 288px);
+        min-width: 248px;
+    }
+
+    .filter-form {
+        padding: 10px 12px !important;
+    }
+
+    .filter-section {
+        padding: 10px;
+    }
+
+    .filter-select-button,
+    .filter-group .input-field {
+        min-height: 34px;
+    }
+}
+
 .filter-header-icon {
     color: var(--user-dashboard-blue);
     border-color: #dbeafe;
