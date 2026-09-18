@@ -1,6 +1,6 @@
         <aside id="filterSidebar" class="filter-sidebar bg-white flex-shrink-0 h-full" aria-hidden="true" aria-label="Dashboard filters">
             <div class="sidebar-content h-full flex flex-col">
-                <form id="dashboardFilterForm" action="{{ url_for(dashboard_endpoint|default('user_dashboard.dashboard')) }}" method="GET" class="filter-form flex-1 overflow-y-auto px-4 md:px-5 py-4 md:py-5 space-y-4">
+                <form id="dashboardFilterForm" action="{{ url_for(dashboard_endpoint|default('user_dashboard.dashboard')) }}" method="GET" class="filter-form flex-1 overflow-y-auto px-4 md:px-5 py-4 md:py-5 space-y-4" data-batch-filter-links='{{ {"years": filter_options.batch_year_to_numbers, "batch_numbers": filter_options.batch_no_to_years}|tojson }}'>
                     
                     {% macro checkbox_filter(name, label, options, selected_values) %}
                     <div class="filter-group relative" data-filter-name="{{ name }}">
@@ -18,7 +18,12 @@
                         <div id="dropdown_{{ name }}" class="checkbox-dropdown-menu hidden absolute z-30 mt-1 w-full rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 p-2">
                             <div class="flex justify-between mb-1 border-b pb-1">
                                 <button type="button" onclick="selectAll('{{ name }}')" class="text-[9px] text-indigo-500 font-bold hover:text-indigo-700">Select All</button>
-                                <button type="button" onclick="clearSelection('{{ name }}')" class="text-[9px] text-red-500 font-bold hover:text-red-700">Clear</button>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" onclick="clearSelection('{{ name }}')" class="text-[9px] text-red-500 font-bold hover:text-red-700">Clear</button>
+                                    <button type="button" onclick="confirmFilterSelection('dropdown_{{ name }}')" class="inline-flex h-5 w-5 items-center justify-center rounded text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition" aria-label="Done selecting {{ label|lower }}" title="Done">
+                                        <i class="fas fa-check text-[9px]" aria-hidden="true"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="space-y-1">
                                 {% for opt in options %}

@@ -4,6 +4,7 @@
 function selectAll(name) {
     const checkboxes = document.querySelectorAll(`input[name="${name}"]`);
     checkboxes.forEach(cb => cb.checked = true);
+    syncLinkedBatchFilters(name);
     updateDropdownLabel(name);
     requestDashboardFilterRefresh();
 }
@@ -11,6 +12,7 @@ function selectAll(name) {
 function clearSelection(name) {
     const checkboxes = document.querySelectorAll(`input[name="${name}"]`);
     checkboxes.forEach(cb => cb.checked = false);
+    syncLinkedBatchFilters(name);
     updateDropdownLabel(name);
     requestDashboardFilterRefresh();
 }
@@ -39,6 +41,15 @@ function closeDashboardDropdowns(exceptId) {
     });
 }
 
+function confirmFilterSelection(dropdownId) {
+    const dropdown = document.getElementById(dropdownId);
+    if (!dropdown) return;
+
+    dropdown.classList.add('hidden');
+    const trigger = document.querySelector(`[onclick*="'${dropdownId}'"]`);
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+}
+
 function clearCheckboxes(type) {
     let selector = '';
     if(type === 'eval-batch') selector = '.eval-batch-checkbox';
@@ -50,6 +61,56 @@ function clearCheckboxes(type) {
         updateEvaluationChart();
     }
 }
+
+// Batch Year and Batch No describe the same cohort. Selecting either one also
+// selects its matching value in the other control, while leaving every option
+// available for the user to choose.
+function syncLinkedBatchFilters(sourceName) {
+    const form = document.getElementById('dashboardFilterForm');
+    if (!form || !['year', 'batch_no'].includes(sourceName)) return;
+
+    const links = (() => {
+        try {
+            return JSON.parse(form.dataset.batchFilterLinks || '{}');
+        } catch (_) {
+            return {};
+        }
+    })();
+    const yearToNumbers = links.years || {};
+    const numberToYears = links.batch_numbers || {};
+    const yearInputs = Array.from(form.querySelectorAll('input[name="year"]'));
+    const batchInputs = Array.from(form.querySelectorAll('input[name="batch_no"]'));
+
+    const checkedValues = inputs => inputs.filter(input => input.checked).map(input => input.value);
+    const selectMatchingBatchNumbers = years => {
+        const matchingNumbers = new Set(years.flatMap(year => yearToNumbers[year] || []));
+        batchInputs.forEach(input => {
+            input.checked = matchingNumbers.has(input.value);
+        });
+        updateDropdownLabel('batch_no');
+    };
+
+    if (sourceName === 'batch_no') {
+        const selectedNumbers = checkedValues(batchInputs);
+        const linkedYears = new Set(selectedNumbers.flatMap(number => numberToYears[number] || []));
+        yearInputs.forEach(input => { input.checked = linkedYears.has(input.value); });
+        updateDropdownLabel('year');
+        return;
+    }
+
+    selectMatchingBatchNumbers(checkedValues(yearInputs));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('dashboardFilterForm');
+    if (!form) return;
+
+    form.querySelectorAll('input[name="year"], input[name="batch_no"]').forEach(input => {
+        input.addEventListener('change', () => syncLinkedBatchFilters(input.name));
+    });
+    const hasSelectedBatchNumber = form.querySelector('input[name="batch_no"]:checked');
+    syncLinkedBatchFilters(hasSelectedBatchNumber ? 'batch_no' : 'year');
+});
 
 // ---------------------------------------------------------
 // GLOBAL FILTER HELPER (UPDATED FOR CHECKBOXES)

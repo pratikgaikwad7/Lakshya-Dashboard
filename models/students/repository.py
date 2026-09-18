@@ -59,6 +59,24 @@ def get_filter_options(plant_location_restriction=None):
     cursor.execute(batch_query + order_by.format(col="batch_no"), tuple(params))
     batch_nos = [row['batch_no'] for row in cursor.fetchall()]
 
+    batch_links_query = """
+        SELECT DISTINCT batch_year, batch_no
+        FROM students
+        WHERE batch_year IS NOT NULL AND batch_no IS NOT NULL
+    """
+    if plant_location_restriction:
+        batch_links_query += " AND plant_location = %s"
+    batch_links_query += " ORDER BY batch_year DESC, batch_no ASC"
+    cursor.execute(batch_links_query, tuple(params))
+
+    batch_year_to_numbers = {}
+    batch_no_to_years = {}
+    for row in cursor.fetchall():
+        year = str(row['batch_year'])
+        batch_no = str(row['batch_no'])
+        batch_year_to_numbers.setdefault(year, []).append(batch_no)
+        batch_no_to_years.setdefault(batch_no, []).append(year)
+
     conn.close()
     
     return {
@@ -68,7 +86,9 @@ def get_filter_options(plant_location_restriction=None):
         'functions': functions,
         'bits_streams': bits_streams,
         'years': years,
-        'batch_nos': batch_nos
+        'batch_nos': batch_nos,
+        'batch_year_to_numbers': batch_year_to_numbers,
+        'batch_no_to_years': batch_no_to_years,
     }
 
 def get_all_students(filters=None):

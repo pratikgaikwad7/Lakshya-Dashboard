@@ -273,21 +273,12 @@ h4.text-slate-400 {
     box-shadow: 0 0 0 3px rgba(16, 185, 129, .12);
 }
 
-.filter-close-button {
-    width: 30px;
-    height: 30px;
-    display: grid;
-    place-items: center;
-    border-radius: 9px;
-    border: 1px solid transparent;
+.filter-form {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
-.filter-close-button:hover {
-    border-color: #fecaca;
-    background: #fff1f2;
-}
-
-.filter-form { scrollbar-gutter: stable; }
+.filter-form::-webkit-scrollbar { display: none; }
 
 .filter-section {
     position: relative;
