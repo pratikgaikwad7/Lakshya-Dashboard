@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 
 from models.db import get_db_connection
-from models.student_model import add_student, normalize_plant_location
+from models.student_model import add_student, normalize_plant_location, update_student
 from services.excel.common import WorkbookValidationError, normalize_column_name
 
 
@@ -30,11 +30,15 @@ def import_students(file, plant_location_restriction=None, enforce_plant_restric
 
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT ticket_no FROM students")
-    existing_tickets = {row[0] for row in cursor.fetchall()}
+    cursor.execute("SELECT id, ticket_no, plant_location FROM students")
+    existing_students = {
+        str(ticket_no).strip(): {"id": student_id, "plant_location": plant_location}
+        for student_id, ticket_no, plant_location in cursor.fetchall()
+    }
     connection.close()
 
     inserted_count = 0
+    updated_count = 0
     skipped_count = 0
     failed_rows = []
 
@@ -49,10 +53,6 @@ def import_students(file, plant_location_restriction=None, enforce_plant_restric
             continue
 
         ticket_no = str(get_value(row, "Ticket No")).strip()
-        if ticket_no in existing_tickets:
-            skipped_count += 1
-            continue
-
         name_parts = str(get_value(row, "Full Name")).strip().split()
         if not name_parts:
             failed_rows.append(f"Row {row_number}: Full Name is empty.")
@@ -105,10 +105,28 @@ def import_students(file, plant_location_restriction=None, enforce_plant_restric
                 continue
             payload["plant_location"] = plant_location_restriction
 
+        existing_student = existing_students.get(ticket_no)
+        if (
+            existing_student
+            and enforce_plant_restriction
+            and normalize_plant_location(existing_student["plant_location"]) != plant_location_restriction
+        ):
+            failed_rows.append(
+                f"Row {row_number}: Ticket No belongs to a student outside your assigned location."
+            )
+            continue
+
         try:
-            add_student(payload)
-            inserted_count += 1
-            existing_tickets.add(ticket_no)
+            if existing_student:
+                update_student(existing_student["id"], payload)
+                updated_count += 1
+            else:
+                student_id = add_student(payload)
+                inserted_count += 1
+                existing_students[ticket_no] = {
+                    "id": student_id,
+                    "plant_location": payload["plant_location"],
+                }
         except Exception as error:
             logger.exception("Student import failed at workbook row %s", row_number)
             failed_rows.append(f"Row {row_number}: Database operation failed.")
@@ -117,6 +135,7 @@ def import_students(file, plant_location_restriction=None, enforce_plant_restric
         "message": "Upload processed",
         "total_rows": len(dataframe),
         "inserted": inserted_count,
+        "updated": updated_count,
         "skipped": skipped_count,
         "failed": len(failed_rows),
         "errors": failed_rows,

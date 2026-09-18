@@ -27,7 +27,7 @@ async function uploadExcelFile(file) {
 
         if (response.ok) {
             showUploadResult(result);
-            if (result.inserted > 0) {
+            if (result.inserted > 0 || result.updated > 0) {
                 loadStudents();
             }
         } else {
@@ -56,7 +56,7 @@ async function uploadExcelFile(file) {
 function showUploadResult(data) {
     document.getElementById('res-total').innerText = data.total_rows;
     document.getElementById('res-inserted').innerText = data.inserted;
-    document.getElementById('res-skipped').innerText = data.skipped;
+    document.getElementById('res-updated').innerText = data.updated || 0;
     document.getElementById('res-failed').innerText = data.failed;
 
     const errorContainer = document.getElementById('errorDetailsContainer');
