@@ -31,7 +31,30 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof closeDashboardDropdowns === 'function') closeDashboardDropdowns();
         }
     });
+
+    document.addEventListener('click', function(event) {
+        const activeBatchesLink = event.target.closest('a[href="#activeBatches"]');
+        if (!activeBatchesLink) return;
+
+        event.preventDefault();
+        scrollToActiveBatches();
+        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#activeBatches`);
+    });
+
+    if (window.location.hash === '#activeBatches') {
+        requestAnimationFrame(scrollToActiveBatches);
+    }
 });
+
+function scrollToActiveBatches() {
+    const activeBatches = document.getElementById('activeBatches');
+    if (!activeBatches) return;
+
+    activeBatches.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'start',
+    });
+}
 
 function initializeDashboardContent(options = {}) {
     const main = document.getElementById('mainContent');

@@ -686,6 +686,152 @@ button {
     background: #cbd5e1;
 }
 
+/* Compact desktop: retain desktop navigation while fitting a complete overview on 13–14 inch laptops. */
+@media (min-width: 1181px) and (max-width: 1440px) {
+    .admin-sidebar {
+        width: 232px;
+    }
+
+    .admin-main {
+        width: calc(100% - 232px);
+        margin-left: 232px;
+    }
+
+    .admin-brand {
+        min-height: 66px;
+        gap: 10px;
+        padding: 0 18px;
+    }
+
+    .admin-brand__mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        font-size: 13px;
+    }
+
+    .admin-brand h1 {
+        font-size: 15px;
+    }
+
+    .admin-nav {
+        padding: 18px 12px;
+    }
+
+    .admin-nav__label {
+        margin: 0 8px 7px;
+    }
+
+    .admin-nav__label--system {
+        margin-top: 20px;
+    }
+
+    .admin-nav__link {
+        min-height: 39px;
+        gap: 10px;
+        margin-bottom: 3px;
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+
+    .admin-account {
+        padding: 12px;
+    }
+
+    .admin-account__identity {
+        gap: 9px;
+        padding: 8px;
+    }
+
+    .admin-account__avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .admin-logout {
+        min-height: 35px;
+        margin-top: 8px;
+    }
+
+    .admin-topbar {
+        min-height: 58px;
+        padding: 8px clamp(18px, 2.5vw, 28px);
+    }
+
+    .admin-content {
+        padding: 20px clamp(18px, 2.5vw, 28px) 42px;
+    }
+
+    .admin-hero,
+    .admin-hero__content {
+        min-height: 190px;
+    }
+
+    .admin-hero {
+        border-radius: 20px;
+    }
+
+    .admin-hero__content {
+        padding: 28px clamp(28px, 4vw, 46px) 60px;
+    }
+
+    .admin-hero h2 {
+        font-size: clamp(31px, 3.5vw, 40px);
+    }
+
+    .admin-stat-grid {
+        width: calc(100% - 36px);
+        gap: 14px;
+        margin-top: -48px;
+    }
+
+    .admin-stat-card {
+        min-height: 136px;
+        padding: 17px;
+        border-radius: 16px;
+    }
+
+    .admin-stat-card__icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+    }
+
+    .admin-stat-card strong {
+        font-size: 34px;
+    }
+
+    .admin-actions {
+        margin-top: 25px;
+    }
+
+    .admin-section-heading {
+        margin-bottom: 12px;
+    }
+
+    .admin-action-grid {
+        gap: 12px;
+    }
+
+    .admin-action-card {
+        min-height: 116px;
+        gap: 11px;
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .admin-action-card__icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+    }
+
+    .admin-action-card__arrow {
+        width: 31px;
+        height: 31px;
+    }
+}
+
 @media (max-width: 1180px) {
     .admin-sidebar {
         width: min(286px, 86vw);
